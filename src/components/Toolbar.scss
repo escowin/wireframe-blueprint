@@ -1,0 +1,80 @@
+@import '../styles/variables';
+
+.toolbar {
+  width: $properties-panel-width;
+  height: 100%;
+  background-color: $surface-color;
+  border-right: 1px solid $border-color;
+  padding: $spacing-md;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.toolbar-section {
+  .toolbar-title {
+    font-size: $font-size-sm;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 $spacing-sm 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.toolbar-tools {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.toolbar-tool {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  background-color: $background-color;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  
+  &:hover {
+    background-color: $surface-color;
+    border-color: $primary-color;
+  }
+  
+  &.active {
+    background-color: $primary-color;
+    border-color: $primary-color;
+    color: white;
+  }
+  
+  .tool-icon {
+    font-size: $font-size-lg;
+    width: 24px;
+    text-align: center;
+  }
+  
+  .tool-label {
+    font-size: $font-size-sm;
+    font-weight: 500;
+  }
+}
+
+.toolbar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.toolbar-help {
+  .help-text {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    line-height: 1.4;
+    margin: 0;
+  }
+} 

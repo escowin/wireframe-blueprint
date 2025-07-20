@@ -1,0 +1,135 @@
+@import '../styles/variables';
+
+.properties-panel {
+  width: $properties-panel-width;
+  height: 100%;
+  background-color: $surface-color;
+  border-left: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+}
+
+.properties-header {
+  padding: $spacing-md;
+  border-bottom: 1px solid $border-color;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  h3 {
+    margin: 0;
+    font-size: $font-size-lg;
+    font-weight: 600;
+    color: $text-primary;
+  }
+  
+  .shape-type {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    text-transform: uppercase;
+    font-weight: 500;
+    background-color: $background-color;
+    padding: 2px 8px;
+    border-radius: $border-radius-sm;
+  }
+}
+
+.properties-content {
+  flex: 1;
+  padding: $spacing-md;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.properties-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  
+  p {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    text-align: center;
+  }
+}
+
+.property-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.property-label {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.color-input {
+  height: 40px;
+  padding: $spacing-xs;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+}
+
+.range-input {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: $border-color;
+  outline: none;
+  cursor: pointer;
+  
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: $primary-color;
+    cursor: pointer;
+  }
+  
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: $primary-color;
+    cursor: pointer;
+    border: none;
+  }
+}
+
+.range-value {
+  font-size: $font-size-xs;
+  color: $text-secondary;
+  text-align: center;
+}
+
+.position-inputs,
+.size-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-sm;
+}
+
+.position-input,
+.size-input {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  
+  label {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    font-weight: 500;
+  }
+  
+  .input {
+    font-size: $font-size-xs;
+    padding: $spacing-xs;
+  }
+} 

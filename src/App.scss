@@ -1,0 +1,14 @@
+@import 'variables';
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: $background-color;
+  
+  &-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+} 

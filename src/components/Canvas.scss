@@ -1,0 +1,53 @@
+@import '../styles/variables';
+
+.canvas-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background-color: $background-color;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+  
+  &:hover {
+    cursor: crosshair;
+  }
+}
+
+.canvas-grid {
+  opacity: 0.3;
+}
+
+.canvas-shape {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 20px;
+  transition: all 0.1s ease;
+  
+  &.selected {
+    outline: 2px solid $primary-color;
+    outline-offset: 2px;
+  }
+  
+  &.circle {
+    border-radius: 50%;
+  }
+  
+  .shape-label {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    background-color: rgba($background-color, 0.8);
+    padding: 2px 4px;
+    border-radius: $border-radius-sm;
+    pointer-events: none;
+    user-select: none;
+  }
+} 
