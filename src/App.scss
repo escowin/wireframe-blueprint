@@ -10,5 +10,7 @@
     display: flex;
     flex: 1;
     overflow: hidden;
+    min-height: 400px; /* Ensure minimum height */
+    border: 2px solid orange; /* Debug border */
   }
 } 

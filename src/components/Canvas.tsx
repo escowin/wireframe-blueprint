@@ -41,16 +41,30 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
   // Handle mouse down on canvas
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!canvasRef.current) return
+    console.log('Mouse down event:', { 
+      currentTool, 
+      button: e.button, 
+      canvasRef: !!canvasRef.current,
+      isDrawing 
+    })
+    
+    if (!canvasRef.current) {
+      console.log('No canvas ref, returning')
+      return
+    }
 
     // Only handle left mouse button for drawing and selection
-    if (e.button !== 0) return
+    if (e.button !== 0) {
+      console.log('Not left mouse button, returning')
+      return
+    }
 
     // Prevent text selection when drawing
     if (currentTool !== 'select') {
       e.preventDefault()
       // Also prevent text selection globally during drawing
       document.body.style.userSelect = 'none'
+      console.log('Prevented text selection for drawing tool')
     }
 
     const rect = canvasRef.current.getBoundingClientRect()
@@ -59,6 +73,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       y: e.clientY - rect.top
     }
     const canvasPoint = screenToCanvas(screenPoint)
+
+    console.log('Mouse down coordinates:', { screenPoint, canvasPoint })
 
     if (currentTool === 'select') {
       // Handle selection
@@ -86,10 +102,17 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       setIsDrawing(true)
       setDrawStart(canvasPoint)
     }
-  }, [currentTool, canvasState.shapes, screenToCanvas, canvasToScreen, setCanvasState])
+  }, [currentTool, canvasState.shapes, screenToCanvas, canvasToScreen, setCanvasState, isDrawing])
 
   // Handle mouse move on canvas
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    console.log('Mouse move event:', { 
+      isDrawing, 
+      drawStart: !!drawStart, 
+      canvasRef: !!canvasRef.current,
+      currentTool 
+    })
+    
     if (!isDrawing || !drawStart || !canvasRef.current) {
       console.log('Mouse move blocked:', { isDrawing, drawStart: !!drawStart, canvasRef: !!canvasRef.current })
       return
@@ -133,12 +156,17 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
   // Handle mouse up on canvas
   const handleMouseUp = useCallback(() => {
+    console.log('Mouse up event:', { isDrawing, drawStart: !!drawStart })
+    
     if (isDrawing && drawStart) {
       console.log('Finalizing shape')
       // Finalize the shape
       setCanvasState(prev => {
         const tempShape = prev.shapes.find(s => s.id === 'temp')
-        if (!tempShape) return prev
+        if (!tempShape) {
+          console.log('No temp shape found')
+          return prev
+        }
 
         // Only create shape if it's large enough
         if (tempShape.size.width < 10 || tempShape.size.height < 10) {
@@ -155,6 +183,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           zIndex: prev.shapes.length
         }
 
+        console.log('Created final shape:', finalShape)
         return {
           ...prev,
           shapes: [...prev.shapes.filter(s => s.id !== 'temp'), finalShape],
@@ -168,6 +197,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     
     // Restore text selection when drawing stops
     document.body.style.userSelect = ''
+    console.log('Drawing state reset')
   }, [isDrawing, drawStart, setCanvasState])
 
   // Handle zoom with mouse wheel
@@ -284,6 +314,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           }}
           onClick={(e) => {
             e.stopPropagation()
+            console.log('Shape clicked:', { shapeId: shape.id, currentTool })
             if (currentTool === 'select') {
               setCanvasState(prev => ({
                 ...prev,
@@ -300,32 +331,122 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     })
   }
 
+    console.log('Canvas rendering with:', { currentTool, isDrawing, shapesCount: canvasState.shapes.length })
+  
+  // Debug canvas dimensions
+  if (canvasRef.current) {
+    const rect = canvasRef.current.getBoundingClientRect()
+    console.log('Canvas dimensions:', {
+      width: rect.width,
+      height: rect.height,
+      top: rect.top,
+      left: rect.left,
+      visible: rect.width > 0 && rect.height > 0
+    })
+  }
+  
   return (
-    <div className="canvas-container">
-      <div
-        ref={canvasRef}
-        className="canvas"
-        onMouseDown={(e) => {
-          handleMouseDown(e)
-          handleMouseDownPan(e)
-        }}
-        onMouseMove={(e) => {
-          handleMouseMove(e)
-          handleMouseMovePan(e)
-        }}
-        onMouseUp={() => {
-          handleMouseUp()
-          handleMouseUpPan()
-        }}
-        onWheel={handleWheel}
-        onContextMenu={(e) => e.preventDefault()}
-        onDragStart={(e) => e.preventDefault()}
-      >
-        {renderGrid()}
-        {renderShapes()}
+    <div 
+      className="canvas-container" 
+      style={{ 
+        minHeight: '400px', 
+        minWidth: '400px',
+        position: 'relative',
+        border: '3px solid green' // Debug border for container
+      }}
+    >
+      <div style={{ 
+        position: 'absolute', 
+        top: '10px', 
+        left: '10px', 
+        background: 'red', 
+        color: 'white', 
+        padding: '5px',
+        zIndex: 1000,
+        fontSize: '12px',
+        border: '2px solid black'
+      }}>
+        Canvas Debug: {currentTool} | Drawing: {isDrawing ? 'Yes' : 'No'}
       </div>
-    </div>
-  )
+      <div style={{ 
+        position: 'fixed', 
+        top: '50px', 
+        left: '50px', 
+        background: 'lime', 
+        color: 'black', 
+        padding: '10px',
+        zIndex: 9999,
+        fontSize: '16px',
+        border: '3px solid black'
+      }}>
+        FIXED POSITION DEBUG - CAN YOU SEE THIS?
+      </div>
+      <div 
+        style={{ 
+          position: 'absolute', 
+          top: '40px', 
+          left: '10px', 
+          background: 'purple', 
+          color: 'white', 
+          padding: '5px',
+          zIndex: 1000,
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+        onClick={() => console.log('Purple debug box clicked!')}
+      >
+        Click me to test events
+      </div>
+              <div
+          ref={canvasRef}
+          className="canvas"
+          style={{ 
+            minHeight: '400px', 
+            minWidth: '400px',
+            backgroundColor: 'rgba(255, 255, 0, 0.3)', // More visible debug background
+            position: 'relative',
+            zIndex: 1
+          }}
+          onMouseDown={(e) => {
+            console.log('Canvas mouse down triggered')
+            handleMouseDown(e)
+            handleMouseDownPan(e)
+          }}
+          onMouseMove={(e) => {
+            handleMouseMove(e)
+            handleMouseMovePan(e)
+          }}
+          onMouseUp={(e) => {
+            console.log('Canvas mouse up triggered')
+            handleMouseUp()
+            handleMouseUpPan()
+          }}
+          onWheel={handleWheel}
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
+          onMouseEnter={() => console.log('Mouse entered canvas')}
+          onMouseLeave={() => console.log('Mouse left canvas')}
+          onClick={() => console.log('Canvas clicked (simple test)')}
+          onPointerDown={() => console.log('Pointer down on canvas')}
+          onPointerMove={() => console.log('Pointer move on canvas')}
+          onPointerUp={() => console.log('Pointer up on canvas')}
+                >
+          <div style={{ 
+            position: 'absolute', 
+            top: '50px', 
+            left: '10px', 
+            background: 'blue', 
+            color: 'white', 
+            padding: '5px',
+            zIndex: 1000
+          }}>
+            Canvas Content: Grid and Shapes
+          </div>
+          {renderGrid()}
+          {renderShapes()}
+        </div>
+      </div>
+    )
 })
 
 export default Canvas 

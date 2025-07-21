@@ -18,6 +18,11 @@ function App() {
   })
   const [currentTool, setCurrentTool] = useState<ToolType>('select')
 
+  const handleToolChange = (tool: ToolType) => {
+    console.log('Tool changed to:', tool)
+    setCurrentTool(tool)
+  }
+
   const selectedShape = canvasState.shapes.find(shape => shape.id === canvasState.selectedShapeId) || null
 
   const handleShapeUpdate = (updatedShape: Shape) => {
@@ -39,7 +44,7 @@ function App() {
     <div className="app">
       <Toolbar 
         currentTool={currentTool}
-        onToolChange={setCurrentTool}
+        onToolChange={handleToolChange}
         onExport={handleExport}
       />
       <div className="app-main">

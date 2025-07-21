@@ -9,6 +9,11 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  border: 2px solid red; /* Debug border */
+  min-height: 400px; /* Ensure minimum height */
+  min-width: 400px; /* Ensure minimum width */
+  width: 100%; /* Ensure full width */
+  height: 100%; /* Ensure full height */
 }
 
 .canvas {
@@ -21,6 +26,9 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  border: 2px solid blue; /* Debug border */
+  min-height: 400px; /* Ensure minimum height */
+  min-width: 400px; /* Ensure minimum width */
   
   &:hover {
     cursor: crosshair;
