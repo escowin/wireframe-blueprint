@@ -24,6 +24,10 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   
   &-main {
     display: flex;
@@ -96,4 +100,12 @@ html, body {
 .select {
   @extend .input;
   cursor: pointer;
+}
+
+// Prevent text selection utility
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 } 

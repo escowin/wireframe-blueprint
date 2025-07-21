@@ -36,6 +36,14 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return
 
+    // Only handle left mouse button for drawing and selection
+    if (e.button !== 0) return
+
+    // Prevent text selection when drawing
+    if (currentTool !== 'select') {
+      e.preventDefault()
+    }
+
     const rect = canvasRef.current.getBoundingClientRect()
     const screenPoint = {
       x: e.clientX - rect.left,
@@ -299,6 +307,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         }}
         onWheel={handleWheel}
         onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+        onSelectStart={(e) => e.preventDefault()}
       >
         {renderGrid()}
         {renderShapes()}

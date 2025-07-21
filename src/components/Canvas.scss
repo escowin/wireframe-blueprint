@@ -5,6 +5,10 @@
   overflow: hidden;
   position: relative;
   background-color: $background-color;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .canvas {
@@ -13,6 +17,10 @@
   position: relative;
   overflow: hidden;
   cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   
   &:hover {
     cursor: crosshair;
