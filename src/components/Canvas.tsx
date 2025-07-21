@@ -46,6 +46,29 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
   }, [canvasState.pan, canvasState.zoom])
 
+  // Handle resize handle click
+  const handleResizeHandleClick = useCallback((e: React.MouseEvent, handleType: string, shape: Shape) => {
+    e.stopPropagation()
+    
+    if (!canvasRef.current) return
+    
+    const rect = canvasRef.current.getBoundingClientRect()
+    const screenPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    }
+    const canvasPoint = screenToCanvas(screenPoint)
+    
+    setResizeHandle(handleType)
+    setIsResizing(true)
+    setResizeStart({ point: canvasPoint, shape: shape })
+    
+    setCanvasState(prev => ({
+      ...prev,
+      selectedShapeId: shape.id
+    }))
+  }, [screenToCanvas, setCanvasState])
+
   // Handle mouse down on canvas
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) {
@@ -95,7 +118,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           height: clickedShape.size.height * canvasState.zoom
         }
         
-        const handleSize = 8 // Size of resize handles
+        const handleSize = 12 // Size of resize handles - increased for better usability
         const isOnHandle = (x: number, y: number, handleX: number, handleY: number) => {
           return Math.abs(x - handleX) <= handleSize && Math.abs(y - handleY) <= handleSize
         }
@@ -324,8 +347,6 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
   // Handle zoom with mouse wheel
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault()
-    
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
     const newZoom = Math.max(0.25, Math.min(4, canvasState.zoom * zoomFactor))
     
@@ -449,57 +470,61 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
                 className="resize-handle resize-handle-nw"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x - 4,
-                  top: screenPos.y - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x - 6,
+                  top: screenPos.y - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 'nw-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 'nw', shape)}
               />
               <div
                 className="resize-handle resize-handle-ne"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x + screenSize.width - 4,
-                  top: screenPos.y - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x + screenSize.width - 6,
+                  top: screenPos.y - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 'ne-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 'ne', shape)}
               />
               <div
                 className="resize-handle resize-handle-sw"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x - 4,
-                  top: screenPos.y + screenSize.height - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x - 6,
+                  top: screenPos.y + screenSize.height - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 'sw-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 'sw', shape)}
               />
               <div
                 className="resize-handle resize-handle-se"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x + screenSize.width - 4,
-                  top: screenPos.y + screenSize.height - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x + screenSize.width - 6,
+                  top: screenPos.y + screenSize.height - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 'se-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 'se', shape)}
               />
               
               {/* Edge handles */}
@@ -507,57 +532,61 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
                 className="resize-handle resize-handle-n"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x + screenSize.width / 2 - 4,
-                  top: screenPos.y - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x + screenSize.width / 2 - 6,
+                  top: screenPos.y - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 'n-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 'n', shape)}
               />
               <div
                 className="resize-handle resize-handle-s"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x + screenSize.width / 2 - 4,
-                  top: screenPos.y + screenSize.height - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x + screenSize.width / 2 - 6,
+                  top: screenPos.y + screenSize.height - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 's-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 's', shape)}
               />
               <div
                 className="resize-handle resize-handle-w"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x - 4,
-                  top: screenPos.y + screenSize.height / 2 - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x - 6,
+                  top: screenPos.y + screenSize.height / 2 - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 'w-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 'w', shape)}
               />
               <div
                 className="resize-handle resize-handle-e"
                 style={{
                   position: 'absolute',
-                  left: screenPos.x + screenSize.width - 4,
-                  top: screenPos.y + screenSize.height / 2 - 4,
-                  width: 8,
-                  height: 8,
+                  left: screenPos.x + screenSize.width - 6,
+                  top: screenPos.y + screenSize.height / 2 - 6,
+                  width: 12,
+                  height: 12,
                   backgroundColor: '#3b82f6',
                   border: '1px solid white',
                   cursor: 'e-resize',
                   zIndex: shape.zIndex + 1
                 }}
+                onMouseDown={(e) => handleResizeHandleClick(e, 'e', shape)}
               />
             </>
           )}
