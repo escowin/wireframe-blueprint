@@ -5,13 +5,15 @@ import './Toolbar.scss'
 interface ToolbarProps {
   currentTool?: ToolType
   onToolChange?: (tool: ToolType) => void
-  onExport?: () => void
+  onExportPNG?: () => void
+  onExportHTML?: () => void
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
   currentTool = 'select',
   onToolChange,
-  onExport
+  onExportPNG,
+  onExportHTML
 }) => {
   const tools = [
     { id: 'select' as ToolType, label: 'Select', icon: '👆' },
@@ -43,10 +45,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="toolbar-actions">
           <button
             className="btn btn--primary"
-            onClick={onExport}
+            onClick={onExportPNG}
             title="Export as PNG"
           >
             Export PNG
+          </button>
+          <button
+            className="btn btn--secondary"
+            onClick={onExportHTML}
+            title="Export as HTML"
+          >
+            Export HTML
           </button>
         </div>
       </div>

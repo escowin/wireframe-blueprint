@@ -54,19 +54,35 @@ export const exportAsPNG = (canvasElement: HTMLDivElement): void => {
 export const generateHTML = (shapes: any[]): string => {
   const sortedShapes = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
   
-  let html = '<body>\n'
+  let html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Generated Layout</title>\n</head>\n<body>\n'
   
   sortedShapes.forEach(shape => {
-    const indent = '  '.repeat(1) // You can adjust indentation based on nesting
+    const indent = '  '.repeat(2)
     const style = `style="position: absolute; left: ${shape.position.x}px; top: ${shape.position.y}px; width: ${shape.size.width}px; height: ${shape.size.height}px; background-color: ${shape.fillColor}; border: ${shape.borderWidth}px ${shape.borderStyle} ${shape.borderColor};"`
+    const classAttr = shape.cssClasses ? ` class="${shape.cssClasses}"` : ''
     
-    html += `${indent}<${shape.elementTag} ${style}>\n`
+    html += `${indent}<${shape.elementTag}${classAttr} ${style}>\n`
+    html += `${indent}  <!-- ${shape.elementTag} content -->\n`
     html += `${indent}</${shape.elementTag}>\n`
   })
   
-  html += '</body>'
+  html += '</body>\n</html>'
   
   return html
+}
+
+// Export HTML as file
+export const exportAsHTML = (shapes: any[]): void => {
+  const html = generateHTML(shapes)
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  
+  const link = document.createElement('a')
+  link.download = 'layout.html'
+  link.href = url
+  link.click()
+  
+  URL.revokeObjectURL(url)
 }
 
 // Snap value to grid

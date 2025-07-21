@@ -9,6 +9,7 @@ export interface Shape {
   position: Point
   size: { width: number; height: number }
   elementTag: string
+  cssClasses: string
   fillColor: string
   borderColor: string
   borderWidth: number

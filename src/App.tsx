@@ -3,7 +3,7 @@ import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
 import { CanvasState, Shape, ToolType } from './types'
-import { exportAsPNG } from './utils/helpers'
+import { exportAsPNG, exportAsHTML } from './utils/helpers'
 import './App.scss'
 
 function App() {
@@ -34,10 +34,14 @@ function App() {
     }))
   }
 
-  const handleExport = () => {
+  const handleExportPNG = () => {
     if (canvasRef.current) {
       exportAsPNG(canvasRef.current)
     }
+  }
+
+  const handleExportHTML = () => {
+    exportAsHTML(canvasState.shapes)
   }
 
   return (
@@ -45,7 +49,8 @@ function App() {
       <Toolbar 
         currentTool={currentTool}
         onToolChange={handleToolChange}
-        onExport={handleExport}
+        onExportPNG={handleExportPNG}
+        onExportHTML={handleExportHTML}
       />
       <div className="app-main">
         <Canvas 

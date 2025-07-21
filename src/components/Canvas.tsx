@@ -212,6 +212,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         position,
         size: { width, height },
         elementTag: 'div',
+        cssClasses: '',
         fillColor: '#e2e8f0',
         borderColor: '#64748b',
         borderWidth: 1,

@@ -32,7 +32,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   }
 
   const elementTags = [
-    'div', 'main', 'section', 'header', 'nav', 'aside', 'footer', 'article'
+    'div', 'main', 'section', 'header', 'nav', 'aside', 'footer', 'article', 'form', 'button', 'input', 'label', 'ul', 'ol', 'li', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
   ]
 
   const borderStyles = ['solid', 'dotted', 'dashed']
@@ -58,6 +58,17 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="property-group">
+          <label className="property-label">CSS Classes</label>
+          <input
+            type="text"
+            className="input"
+            placeholder="e.g., container, wrapper, button-primary"
+            value={selectedShape.cssClasses}
+            onChange={(e) => handlePropertyChange('cssClasses', e.target.value)}
+          />
         </div>
 
         <div className="property-group">
