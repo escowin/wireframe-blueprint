@@ -59,6 +59,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
     const canvasPoint = screenToCanvas(screenPoint)
     
+
+    
     setResizeHandle(handleType)
     setIsResizing(true)
     setResizeStart({ point: canvasPoint, shape: shape })
@@ -247,6 +249,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       const deltaY = canvasPoint.y - resizeStart.point.y
       const originalShape = resizeStart.shape
       
+
+      
       let newPosition = { ...originalShape.position }
       let newSize = { ...originalShape.size }
       
@@ -287,6 +291,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           break
       }
       
+
+      
       setCanvasState(prev => ({
         ...prev,
         shapes: prev.shapes.map(shape => 
@@ -296,7 +302,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         )
       }))
       
-      setResizeStart({ point: canvasPoint, shape: originalShape })
+      // DON'T update resizeStart here - this was causing the "tense" behavior
+      // setResizeStart({ point: canvasPoint, shape: originalShape })
     }
   }, [isDrawing, drawStart, isDragging, isResizing, dragStart, resizeStart, resizeHandle, currentTool, screenToCanvas, canvasState.shapes.length, canvasState.selectedShapeId, setCanvasState])
 
@@ -332,6 +339,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       })
     }
 
+
+
     // Reset all states
     setIsDrawing(false)
     setDrawStart(null)
@@ -343,7 +352,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     
     // Restore text selection when drawing stops
     document.body.style.userSelect = ''
-  }, [isDrawing, drawStart, isDragging, isResizing, setCanvasState])
+  }, [isDrawing, drawStart, isDragging, isResizing, resizeHandle, setCanvasState])
 
   // Handle zoom with mouse wheel
   const handleWheel = useCallback((e: React.WheelEvent) => {
