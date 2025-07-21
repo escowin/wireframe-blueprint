@@ -1,4 +1,4 @@
-@import 'variables';
+@use './styles/variables' as *;
 
 .app {
   display: flex;
