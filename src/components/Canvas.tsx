@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
+import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { CanvasState, Shape, Point, ToolType } from '../types'
 import { generateId } from '../utils/helpers'
 import './Canvas.scss'
@@ -15,6 +15,13 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   const [drawStart, setDrawStart] = useState<Point | null>(null)
 
   useImperativeHandle(ref, () => canvasRef.current!)
+
+  // Cleanup effect to restore text selection when component unmounts
+  useEffect(() => {
+    return () => {
+      document.body.style.userSelect = ''
+    }
+  }, [])
 
   // Convert screen coordinates to canvas coordinates
   const screenToCanvas = useCallback((screenPoint: Point): Point => {
@@ -42,6 +49,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     // Prevent text selection when drawing
     if (currentTool !== 'select') {
       e.preventDefault()
+      // Also prevent text selection globally during drawing
+      document.body.style.userSelect = 'none'
     }
 
     const rect = canvasRef.current.getBoundingClientRect()
@@ -156,6 +165,9 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
     setIsDrawing(false)
     setDrawStart(null)
+    
+    // Restore text selection when drawing stops
+    document.body.style.userSelect = ''
   }, [isDrawing, drawStart, setCanvasState])
 
   // Handle zoom with mouse wheel
@@ -308,7 +320,6 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         onWheel={handleWheel}
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
-        onSelectStart={(e) => e.preventDefault()}
       >
         {renderGrid()}
         {renderShapes()}
