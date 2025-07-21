@@ -8,6 +8,9 @@ This directory contains comprehensive documentation for the diagram application,
 - **[`canvas-drawing-bug-fix.md`](./canvas-drawing-bug-fix.md)** - Complete documentation of the canvas drawing bug fix, including root cause analysis, solution implementation, and lessons learned.
 - **[`select-tool-drag-resize-fix.md`](./select-tool-drag-resize-fix.md)** - Documentation of the select tool drag and resize functionality fix, including implementation details and testing procedures.
 
+### Current Issues
+- **[`resize-issues-documentation.md`](./resize-issues-documentation.md)** - Documentation of current resize functionality issues including mousewheel console errors and click & drag resize difficulty.
+
 ### Debugging Resources
 - **[`debugging-guide.md`](./debugging-guide.md)** - Quick reference guide for debugging common canvas issues, including symptoms, solutions, and diagnostic commands.
 
@@ -35,6 +38,10 @@ This directory contains comprehensive documentation for the diagram application,
 ### Text Selection Interfering with Drawing
 **Quick Fix**: Add CSS and JavaScript text selection prevention
 **Reference**: [Debugging Guide - Text Selection Interfering](./debugging-guide.md#issue-text-selection-interfering)
+
+### Resize Functionality Issues
+**Quick Fix**: Check handle detection logic and mousewheel event handling
+**Reference**: [Resize Issues Documentation](./resize-issues-documentation.md)
 
 ## 📋 Development Workflow
 
