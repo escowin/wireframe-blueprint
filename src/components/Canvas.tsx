@@ -65,14 +65,18 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       }))
     } else {
       // Start drawing
+      console.log('Starting to draw:', { currentTool, canvasPoint })
       setIsDrawing(true)
       setDrawStart(canvasPoint)
     }
-  }, [currentTool, canvasState.shapes, screenToCanvas, canvasToScreen])
+  }, [currentTool, canvasState.shapes, screenToCanvas, canvasToScreen, setCanvasState])
 
   // Handle mouse move on canvas
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDrawing || !drawStart || !canvasRef.current) return
+    if (!isDrawing || !drawStart || !canvasRef.current) {
+      console.log('Mouse move blocked:', { isDrawing, drawStart: !!drawStart, canvasRef: !!canvasRef.current })
+      return
+    }
 
     const rect = canvasRef.current.getBoundingClientRect()
     const screenPoint = {
@@ -82,8 +86,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     const canvasPoint = screenToCanvas(screenPoint)
 
     // Update the temporary shape being drawn
-    const width = Math.abs(canvasPoint.x - drawStart.x)
-    const height = Math.abs(canvasPoint.y - drawStart.y)
+    const width = Math.max(Math.abs(canvasPoint.x - drawStart.x), 10)
+    const height = Math.max(Math.abs(canvasPoint.y - drawStart.y), 10)
     const position = {
       x: Math.min(drawStart.x, canvasPoint.x),
       y: Math.min(drawStart.y, canvasPoint.y)
@@ -108,15 +112,25 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       ...prev,
       shapes: [...prev.shapes.filter(s => s.id !== 'temp'), tempShape]
     }))
-  }, [isDrawing, drawStart, currentTool, screenToCanvas, canvasState.shapes.length])
+  }, [isDrawing, drawStart, currentTool, screenToCanvas, canvasState.shapes.length, setCanvasState])
 
   // Handle mouse up on canvas
   const handleMouseUp = useCallback(() => {
     if (isDrawing && drawStart) {
+      console.log('Finalizing shape')
       // Finalize the shape
       setCanvasState(prev => {
         const tempShape = prev.shapes.find(s => s.id === 'temp')
         if (!tempShape) return prev
+
+        // Only create shape if it's large enough
+        if (tempShape.size.width < 10 || tempShape.size.height < 10) {
+          console.log('Shape too small, removing temp shape')
+          return {
+            ...prev,
+            shapes: prev.shapes.filter(s => s.id !== 'temp')
+          }
+        }
 
         const finalShape: Shape = {
           ...tempShape,
@@ -134,7 +148,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
     setIsDrawing(false)
     setDrawStart(null)
-  }, [isDrawing, drawStart])
+  }, [isDrawing, drawStart, setCanvasState])
 
   // Handle zoom with mouse wheel
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -147,7 +161,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       ...prev,
       zoom: newZoom
     }))
-  }, [canvasState.zoom])
+  }, [canvasState.zoom, setCanvasState])
 
   // Handle pan with middle mouse button
   const [isPanning, setIsPanning] = useState(false)
@@ -176,7 +190,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }))
 
     setPanStart({ x: e.clientX, y: e.clientY })
-  }, [isPanning, panStart])
+  }, [isPanning, panStart, setCanvasState])
 
   const handleMouseUpPan = useCallback(() => {
     setIsPanning(false)
@@ -250,10 +264,12 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           }}
           onClick={(e) => {
             e.stopPropagation()
-            setCanvasState(prev => ({
-              ...prev,
-              selectedShapeId: shape.id
-            }))
+            if (currentTool === 'select') {
+              setCanvasState(prev => ({
+                ...prev,
+                selectedShapeId: shape.id
+              }))
+            }
           }}
         >
           <div className="shape-label">
