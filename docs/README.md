@@ -6,6 +6,7 @@ This directory contains comprehensive documentation for the diagram application,
 
 ### Bug Fix Documentation
 - **[`canvas-drawing-bug-fix.md`](./canvas-drawing-bug-fix.md)** - Complete documentation of the canvas drawing bug fix, including root cause analysis, solution implementation, and lessons learned.
+- **[`select-tool-drag-resize-fix.md`](./select-tool-drag-resize-fix.md)** - Documentation of the select tool drag and resize functionality fix, including implementation details and testing procedures.
 
 ### Debugging Resources
 - **[`debugging-guide.md`](./debugging-guide.md)** - Quick reference guide for debugging common canvas issues, including symptoms, solutions, and diagnostic commands.
@@ -14,11 +15,11 @@ This directory contains comprehensive documentation for the diagram application,
 
 ### For Developers
 - **New to the project?** Start with the [debugging guide](./debugging-guide.md) to understand common issues
-- **Fixing a bug?** Check the [canvas drawing bug fix](./canvas-drawing-bug-fix.md) for comprehensive solutions
+- **Fixing a bug?** Check the [canvas drawing bug fix](./canvas-drawing-bug-fix.md) and [select tool fix](./select-tool-drag-resize-fix.md) for comprehensive solutions
 - **Need quick fixes?** Use the debugging checklist in the [debugging guide](./debugging-guide.md)
 
 ### For QA/Testing
-- **Testing canvas functionality?** Use the verification steps in the [bug fix documentation](./canvas-drawing-bug-fix.md)
+- **Testing canvas functionality?** Use the verification steps in the [bug fix documentation](./canvas-drawing-bug-fix.md) and [select tool documentation](./select-tool-drag-resize-fix.md)
 - **Reporting issues?** Reference the debugging tools and diagnostic commands
 
 ## 🔧 Common Issues & Solutions

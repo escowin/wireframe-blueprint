@@ -9,7 +9,6 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  border: 2px solid red; /* Debug border */
   min-height: 400px; /* Ensure minimum height */
   min-width: 400px; /* Ensure minimum width */
   width: 100%; /* Ensure full width */
@@ -26,7 +25,6 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  border: 2px solid blue; /* Debug border */
   min-height: 400px; /* Ensure minimum height */
   min-width: 400px; /* Ensure minimum width */
   
@@ -66,4 +64,29 @@
     pointer-events: none;
     user-select: none;
   }
+}
+
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border: 1px solid white;
+  border-radius: 2px;
+  z-index: 1000;
+  pointer-events: auto;
+  
+  &:hover {
+    background-color: #2563eb;
+    transform: scale(1.2);
+  }
+  
+  &.resize-handle-nw { cursor: nw-resize; }
+  &.resize-handle-ne { cursor: ne-resize; }
+  &.resize-handle-sw { cursor: sw-resize; }
+  &.resize-handle-se { cursor: se-resize; }
+  &.resize-handle-n { cursor: n-resize; }
+  &.resize-handle-s { cursor: s-resize; }
+  &.resize-handle-w { cursor: w-resize; }
+  &.resize-handle-e { cursor: e-resize; }
 } 

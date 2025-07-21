@@ -13,6 +13,13 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   const canvasRef = useRef<HTMLDivElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawStart, setDrawStart] = useState<Point | null>(null)
+  
+  // New state for drag and resize functionality
+  const [isDragging, setIsDragging] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const [dragStart, setDragStart] = useState<Point | null>(null)
+  const [resizeStart, setResizeStart] = useState<{ point: Point; shape: Shape } | null>(null)
+  const [resizeHandle, setResizeHandle] = useState<string>('') // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
 
   useImperativeHandle(ref, () => canvasRef.current!)
 
@@ -41,21 +48,12 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
   // Handle mouse down on canvas
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    console.log('Mouse down event:', { 
-      currentTool, 
-      button: e.button, 
-      canvasRef: !!canvasRef.current,
-      isDrawing 
-    })
-    
     if (!canvasRef.current) {
-      console.log('No canvas ref, returning')
       return
     }
 
     // Only handle left mouse button for drawing and selection
     if (e.button !== 0) {
-      console.log('Not left mouse button, returning')
       return
     }
 
@@ -64,7 +62,6 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       e.preventDefault()
       // Also prevent text selection globally during drawing
       document.body.style.userSelect = 'none'
-      console.log('Prevented text selection for drawing tool')
     }
 
     const rect = canvasRef.current.getBoundingClientRect()
@@ -74,10 +71,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
     const canvasPoint = screenToCanvas(screenPoint)
 
-    console.log('Mouse down coordinates:', { screenPoint, canvasPoint })
-
     if (currentTool === 'select') {
-      // Handle selection
+      // Handle selection, drag, and resize
       const clickedShape = canvasState.shapes.slice().reverse().find(shape => {
         const screenPos = canvasToScreen(shape.position)
         const screenSize = {
@@ -92,13 +87,71 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         )
       })
 
-      setCanvasState(prev => ({
-        ...prev,
-        selectedShapeId: clickedShape?.id || null
-      }))
+      if (clickedShape) {
+        // Check if clicking on resize handles
+        const screenPos = canvasToScreen(clickedShape.position)
+        const screenSize = {
+          width: clickedShape.size.width * canvasState.zoom,
+          height: clickedShape.size.height * canvasState.zoom
+        }
+        
+        const handleSize = 8 // Size of resize handles
+        const isOnHandle = (x: number, y: number, handleX: number, handleY: number) => {
+          return Math.abs(x - handleX) <= handleSize && Math.abs(y - handleY) <= handleSize
+        }
+
+        // Check corners first, then edges
+        if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x, screenPos.y)) {
+          setResizeHandle('nw')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x + screenSize.width, screenPos.y)) {
+          setResizeHandle('ne')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x, screenPos.y + screenSize.height)) {
+          setResizeHandle('sw')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x + screenSize.width, screenPos.y + screenSize.height)) {
+          setResizeHandle('se')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x + screenSize.width / 2, screenPos.y)) {
+          setResizeHandle('n')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x + screenSize.width / 2, screenPos.y + screenSize.height)) {
+          setResizeHandle('s')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x, screenPos.y + screenSize.height / 2)) {
+          setResizeHandle('w')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else if (isOnHandle(screenPoint.x, screenPoint.y, screenPos.x + screenSize.width, screenPos.y + screenSize.height / 2)) {
+          setResizeHandle('e')
+          setIsResizing(true)
+          setResizeStart({ point: canvasPoint, shape: clickedShape })
+        } else {
+          // Start dragging
+          setIsDragging(true)
+          setDragStart(canvasPoint)
+        }
+
+        setCanvasState(prev => ({
+          ...prev,
+          selectedShapeId: clickedShape.id
+        }))
+      } else {
+        // Clicked on empty space, deselect
+        setCanvasState(prev => ({
+          ...prev,
+          selectedShapeId: null
+        }))
+      }
     } else {
       // Start drawing
-      console.log('Starting to draw:', { currentTool, canvasPoint })
       setIsDrawing(true)
       setDrawStart(canvasPoint)
     }
@@ -106,15 +159,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
   // Handle mouse move on canvas
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    console.log('Mouse move event:', { 
-      isDrawing, 
-      drawStart: !!drawStart, 
-      canvasRef: !!canvasRef.current,
-      currentTool 
-    })
-    
-    if (!isDrawing || !drawStart || !canvasRef.current) {
-      console.log('Mouse move blocked:', { isDrawing, drawStart: !!drawStart, canvasRef: !!canvasRef.current })
+    if (!canvasRef.current) {
       return
     }
 
@@ -125,52 +170,125 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
     const canvasPoint = screenToCanvas(screenPoint)
 
-    // Update the temporary shape being drawn
-    const width = Math.max(Math.abs(canvasPoint.x - drawStart.x), 10)
-    const height = Math.max(Math.abs(canvasPoint.y - drawStart.y), 10)
-    const position = {
-      x: Math.min(drawStart.x, canvasPoint.x),
-      y: Math.min(drawStart.y, canvasPoint.y)
-    }
+    // Handle drawing
+    if (isDrawing && drawStart) {
+      // Update the temporary shape being drawn
+      const width = Math.max(Math.abs(canvasPoint.x - drawStart.x), 10)
+      const height = Math.max(Math.abs(canvasPoint.y - drawStart.y), 10)
+      const position = {
+        x: Math.min(drawStart.x, canvasPoint.x),
+        y: Math.min(drawStart.y, canvasPoint.y)
+      }
 
-    // Create temporary shape for preview
-    const tempShape: Shape = {
-      id: 'temp',
-      type: currentTool === 'rectangle' ? 'rectangle' : 'circle',
-      position,
-      size: { width, height },
-      elementTag: 'div',
-      fillColor: '#e2e8f0',
-      borderColor: '#64748b',
-      borderWidth: 1,
-      borderStyle: 'solid',
-      zIndex: canvasState.shapes.length
-    }
+      // Create temporary shape for preview
+      const tempShape: Shape = {
+        id: 'temp',
+        type: currentTool === 'rectangle' ? 'rectangle' : 'circle',
+        position,
+        size: { width, height },
+        elementTag: 'div',
+        fillColor: '#e2e8f0',
+        borderColor: '#64748b',
+        borderWidth: 1,
+        borderStyle: 'solid',
+        zIndex: canvasState.shapes.length
+      }
 
-    // Update canvas with temporary shape
-    setCanvasState(prev => ({
-      ...prev,
-      shapes: [...prev.shapes.filter(s => s.id !== 'temp'), tempShape]
-    }))
-  }, [isDrawing, drawStart, currentTool, screenToCanvas, canvasState.shapes.length, setCanvasState])
+      // Update canvas with temporary shape
+      setCanvasState(prev => ({
+        ...prev,
+        shapes: [...prev.shapes.filter(s => s.id !== 'temp'), tempShape]
+      }))
+    }
+    
+    // Handle dragging
+    if (isDragging && dragStart && canvasState.selectedShapeId) {
+      const deltaX = canvasPoint.x - dragStart.x
+      const deltaY = canvasPoint.y - dragStart.y
+      
+      setCanvasState(prev => ({
+        ...prev,
+        shapes: prev.shapes.map(shape => 
+          shape.id === prev.selectedShapeId 
+            ? { ...shape, position: { x: shape.position.x + deltaX, y: shape.position.y + deltaY } }
+            : shape
+        )
+      }))
+      
+      setDragStart(canvasPoint)
+    }
+    
+    // Handle resizing
+    if (isResizing && resizeStart && canvasState.selectedShapeId) {
+      const deltaX = canvasPoint.x - resizeStart.point.x
+      const deltaY = canvasPoint.y - resizeStart.point.y
+      const originalShape = resizeStart.shape
+      
+      let newPosition = { ...originalShape.position }
+      let newSize = { ...originalShape.size }
+      
+      switch (resizeHandle) {
+        case 'nw':
+          newPosition.x = originalShape.position.x + deltaX
+          newPosition.y = originalShape.position.y + deltaY
+          newSize.width = Math.max(10, originalShape.size.width - deltaX)
+          newSize.height = Math.max(10, originalShape.size.height - deltaY)
+          break
+        case 'ne':
+          newPosition.y = originalShape.position.y + deltaY
+          newSize.width = Math.max(10, originalShape.size.width + deltaX)
+          newSize.height = Math.max(10, originalShape.size.height - deltaY)
+          break
+        case 'sw':
+          newPosition.x = originalShape.position.x + deltaX
+          newSize.width = Math.max(10, originalShape.size.width - deltaX)
+          newSize.height = Math.max(10, originalShape.size.height + deltaY)
+          break
+        case 'se':
+          newSize.width = Math.max(10, originalShape.size.width + deltaX)
+          newSize.height = Math.max(10, originalShape.size.height + deltaY)
+          break
+        case 'n':
+          newPosition.y = originalShape.position.y + deltaY
+          newSize.height = Math.max(10, originalShape.size.height - deltaY)
+          break
+        case 's':
+          newSize.height = Math.max(10, originalShape.size.height + deltaY)
+          break
+        case 'w':
+          newPosition.x = originalShape.position.x + deltaX
+          newSize.width = Math.max(10, originalShape.size.width - deltaX)
+          break
+        case 'e':
+          newSize.width = Math.max(10, originalShape.size.width + deltaX)
+          break
+      }
+      
+      setCanvasState(prev => ({
+        ...prev,
+        shapes: prev.shapes.map(shape => 
+          shape.id === prev.selectedShapeId 
+            ? { ...shape, position: newPosition, size: newSize }
+            : shape
+        )
+      }))
+      
+      setResizeStart({ point: canvasPoint, shape: originalShape })
+    }
+  }, [isDrawing, drawStart, isDragging, isResizing, dragStart, resizeStart, resizeHandle, currentTool, screenToCanvas, canvasState.shapes.length, canvasState.selectedShapeId, setCanvasState])
 
   // Handle mouse up on canvas
   const handleMouseUp = useCallback(() => {
-    console.log('Mouse up event:', { isDrawing, drawStart: !!drawStart })
-    
     if (isDrawing && drawStart) {
-      console.log('Finalizing shape')
       // Finalize the shape
       setCanvasState(prev => {
         const tempShape = prev.shapes.find(s => s.id === 'temp')
         if (!tempShape) {
-          console.log('No temp shape found')
           return prev
         }
 
         // Only create shape if it's large enough
         if (tempShape.size.width < 10 || tempShape.size.height < 10) {
-          console.log('Shape too small, removing temp shape')
           return {
             ...prev,
             shapes: prev.shapes.filter(s => s.id !== 'temp')
@@ -183,7 +301,6 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           zIndex: prev.shapes.length
         }
 
-        console.log('Created final shape:', finalShape)
         return {
           ...prev,
           shapes: [...prev.shapes.filter(s => s.id !== 'temp'), finalShape],
@@ -192,13 +309,18 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       })
     }
 
+    // Reset all states
     setIsDrawing(false)
     setDrawStart(null)
+    setIsDragging(false)
+    setIsResizing(false)
+    setDragStart(null)
+    setResizeStart(null)
+    setResizeHandle('')
     
     // Restore text selection when drawing stops
     document.body.style.userSelect = ''
-    console.log('Drawing state reset')
-  }, [isDrawing, drawStart, setCanvasState])
+  }, [isDrawing, drawStart, isDragging, isResizing, setCanvasState])
 
   // Handle zoom with mouse wheel
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -297,53 +419,154 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       const isSelected = shape.id === canvasState.selectedShapeId
 
       return (
-        <div
-          key={shape.id}
-          className={`canvas-shape ${shape.type} ${isSelected ? 'selected' : ''}`}
-          style={{
-            position: 'absolute',
-            left: screenPos.x,
-            top: screenPos.y,
-            width: screenSize.width,
-            height: screenSize.height,
-            backgroundColor: shape.fillColor,
-            border: `${shape.borderWidth * canvasState.zoom}px ${shape.borderStyle} ${shape.borderColor}`,
-            borderRadius: shape.type === 'circle' ? '50%' : '0',
-            zIndex: shape.zIndex,
-            cursor: 'pointer'
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            console.log('Shape clicked:', { shapeId: shape.id, currentTool })
-            if (currentTool === 'select') {
-              setCanvasState(prev => ({
-                ...prev,
-                selectedShapeId: shape.id
-              }))
-            }
-          }}
-        >
-          <div className="shape-label">
-            &lt;{shape.elementTag}&gt;
+        <React.Fragment key={shape.id}>
+          <div
+            className={`canvas-shape ${shape.type} ${isSelected ? 'selected' : ''}`}
+            style={{
+              position: 'absolute',
+              left: screenPos.x,
+              top: screenPos.y,
+              width: screenSize.width,
+              height: screenSize.height,
+              backgroundColor: shape.fillColor,
+              border: `${shape.borderWidth * canvasState.zoom}px ${shape.borderStyle} ${shape.borderColor}`,
+              borderRadius: shape.type === 'circle' ? '50%' : '0',
+              zIndex: shape.zIndex,
+              cursor: isSelected ? 'move' : 'pointer'
+            }}
+
+          >
+            <div className="shape-label">
+              &lt;{shape.elementTag}&gt;
+            </div>
           </div>
-        </div>
+          
+          {/* Render resize handles for selected shapes */}
+          {isSelected && currentTool === 'select' && (
+            <>
+              {/* Corner handles */}
+              <div
+                className="resize-handle resize-handle-nw"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x - 4,
+                  top: screenPos.y - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 'nw-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+              <div
+                className="resize-handle resize-handle-ne"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x + screenSize.width - 4,
+                  top: screenPos.y - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 'ne-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+              <div
+                className="resize-handle resize-handle-sw"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x - 4,
+                  top: screenPos.y + screenSize.height - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 'sw-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+              <div
+                className="resize-handle resize-handle-se"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x + screenSize.width - 4,
+                  top: screenPos.y + screenSize.height - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 'se-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+              
+              {/* Edge handles */}
+              <div
+                className="resize-handle resize-handle-n"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x + screenSize.width / 2 - 4,
+                  top: screenPos.y - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 'n-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+              <div
+                className="resize-handle resize-handle-s"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x + screenSize.width / 2 - 4,
+                  top: screenPos.y + screenSize.height - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 's-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+              <div
+                className="resize-handle resize-handle-w"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x - 4,
+                  top: screenPos.y + screenSize.height / 2 - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 'w-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+              <div
+                className="resize-handle resize-handle-e"
+                style={{
+                  position: 'absolute',
+                  left: screenPos.x + screenSize.width - 4,
+                  top: screenPos.y + screenSize.height / 2 - 4,
+                  width: 8,
+                  height: 8,
+                  backgroundColor: '#3b82f6',
+                  border: '1px solid white',
+                  cursor: 'e-resize',
+                  zIndex: shape.zIndex + 1
+                }}
+              />
+            </>
+          )}
+        </React.Fragment>
       )
     })
   }
 
-    console.log('Canvas rendering with:', { currentTool, isDrawing, shapesCount: canvasState.shapes.length })
-  
-  // Debug canvas dimensions
-  if (canvasRef.current) {
-    const rect = canvasRef.current.getBoundingClientRect()
-    console.log('Canvas dimensions:', {
-      width: rect.width,
-      height: rect.height,
-      top: rect.top,
-      left: rect.left,
-      visible: rect.width > 0 && rect.height > 0
-    })
-  }
+
   
   return (
     <div 
@@ -351,64 +574,20 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       style={{ 
         minHeight: '400px', 
         minWidth: '400px',
-        position: 'relative',
-        border: '3px solid green' // Debug border for container
+        position: 'relative'
       }}
     >
-      <div style={{ 
-        position: 'absolute', 
-        top: '10px', 
-        left: '10px', 
-        background: 'red', 
-        color: 'white', 
-        padding: '5px',
-        zIndex: 1000,
-        fontSize: '12px',
-        border: '2px solid black'
-      }}>
-        Canvas Debug: {currentTool} | Drawing: {isDrawing ? 'Yes' : 'No'}
-      </div>
-      <div style={{ 
-        position: 'fixed', 
-        top: '50px', 
-        left: '50px', 
-        background: 'lime', 
-        color: 'black', 
-        padding: '10px',
-        zIndex: 9999,
-        fontSize: '16px',
-        border: '3px solid black'
-      }}>
-        FIXED POSITION DEBUG - CAN YOU SEE THIS?
-      </div>
-      <div 
-        style={{ 
-          position: 'absolute', 
-          top: '40px', 
-          left: '10px', 
-          background: 'purple', 
-          color: 'white', 
-          padding: '5px',
-          zIndex: 1000,
-          fontSize: '12px',
-          cursor: 'pointer'
-        }}
-        onClick={() => console.log('Purple debug box clicked!')}
-      >
-        Click me to test events
-      </div>
+      
               <div
           ref={canvasRef}
           className="canvas"
           style={{ 
             minHeight: '400px', 
             minWidth: '400px',
-            backgroundColor: 'rgba(255, 255, 0, 0.3)', // More visible debug background
             position: 'relative',
             zIndex: 1
           }}
           onMouseDown={(e) => {
-            console.log('Canvas mouse down triggered')
             handleMouseDown(e)
             handleMouseDownPan(e)
           }}
@@ -417,31 +596,14 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
             handleMouseMovePan(e)
           }}
           onMouseUp={(e) => {
-            console.log('Canvas mouse up triggered')
             handleMouseUp()
             handleMouseUpPan()
           }}
           onWheel={handleWheel}
           onContextMenu={(e) => e.preventDefault()}
           onDragStart={(e) => e.preventDefault()}
-          onMouseEnter={() => console.log('Mouse entered canvas')}
-          onMouseLeave={() => console.log('Mouse left canvas')}
-          onClick={() => console.log('Canvas clicked (simple test)')}
-          onPointerDown={() => console.log('Pointer down on canvas')}
-          onPointerMove={() => console.log('Pointer move on canvas')}
-          onPointerUp={() => console.log('Pointer up on canvas')}
                 >
-          <div style={{ 
-            position: 'absolute', 
-            top: '50px', 
-            left: '10px', 
-            background: 'blue', 
-            color: 'white', 
-            padding: '5px',
-            zIndex: 1000
-          }}>
-            Canvas Content: Grid and Shapes
-          </div>
+          
           {renderGrid()}
           {renderShapes()}
         </div>
