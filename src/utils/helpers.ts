@@ -106,4 +106,94 @@ export const hexToRgba = (hex: string, opacity: number): string => {
   const b = parseInt(cleanHex.substr(4, 2), 16)
   
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
+}
+
+// Save diagram as JSON file
+export const saveDiagram = (canvasState: any): void => {
+  const diagramData = {
+    version: '1.0',
+    timestamp: new Date().toISOString(),
+    canvasState: canvasState
+  }
+  
+  const jsonString = JSON.stringify(diagramData, null, 2)
+  const blob = new Blob([jsonString], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  
+  const link = document.createElement('a')
+  link.download = `diagram-${new Date().toISOString().split('T')[0]}.json`
+  link.href = url
+  link.click()
+  
+  URL.revokeObjectURL(url)
+}
+
+// Load diagram from JSON file
+export const loadDiagram = (file: File): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string
+        const diagramData = JSON.parse(content)
+        
+        // Validate the file format
+        if (!diagramData.version || !diagramData.canvasState) {
+          throw new Error('Invalid diagram file format')
+        }
+        
+        resolve(diagramData.canvasState)
+      } catch (error) {
+        reject(new Error('Failed to parse diagram file'))
+      }
+    }
+    
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'))
+    }
+    
+    reader.readAsText(file)
+  })
+}
+
+// Auto-save to localStorage
+export const autoSave = (canvasState: any): void => {
+  try {
+    const autoSaveData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      canvasState: canvasState
+    }
+    localStorage.setItem('diagram-autosave', JSON.stringify(autoSaveData))
+  } catch (error) {
+    console.warn('Failed to auto-save diagram:', error)
+  }
+}
+
+// Load auto-saved diagram from localStorage
+export const loadAutoSave = (): any | null => {
+  try {
+    const saved = localStorage.getItem('diagram-autosave')
+    if (!saved) return null
+    
+    const autoSaveData = JSON.parse(saved)
+    if (!autoSaveData.version || !autoSaveData.canvasState) {
+      return null
+    }
+    
+    return autoSaveData.canvasState
+  } catch (error) {
+    console.warn('Failed to load auto-saved diagram:', error)
+    return null
+  }
+}
+
+// Clear auto-saved diagram
+export const clearAutoSave = (): void => {
+  try {
+    localStorage.removeItem('diagram-autosave')
+  } catch (error) {
+    console.warn('Failed to clear auto-save:', error)
+  }
 } 

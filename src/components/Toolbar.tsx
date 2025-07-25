@@ -7,13 +7,17 @@ interface ToolbarProps {
   onToolChange?: (tool: ToolType) => void
   onExportPNG?: () => void
   onExportHTML?: () => void
+  onSave?: () => void
+  onLoad?: (file: File) => void
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
   currentTool = 'select',
   onToolChange,
   onExportPNG,
-  onExportHTML
+  onExportHTML,
+  onSave,
+  onLoad
 }) => {
   const tools = [
     { id: 'select' as ToolType, label: 'Select', icon: '👆' },
@@ -41,7 +45,36 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </div>
 
       <div className="toolbar-section">
-        <h3 className="toolbar-title">Actions</h3>
+        <h3 className="toolbar-title">File</h3>
+        <div className="toolbar-actions">
+          <button
+            className="btn btn--primary"
+            onClick={onSave}
+            title="Save diagram"
+          >
+            Save
+          </button>
+          <label className="btn btn--secondary" title="Load diagram">
+            Load
+            <input
+              type="file"
+              accept=".json"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file && onLoad) {
+                  onLoad(file)
+                }
+                // Reset the input
+                e.target.value = ''
+              }}
+              style={{ display: 'none' }}
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="toolbar-section">
+        <h3 className="toolbar-title">Export</h3>
         <div className="toolbar-actions">
           <button
             className="btn btn--primary"

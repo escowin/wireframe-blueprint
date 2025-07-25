@@ -9,13 +9,16 @@ A Figma-like web application for quickly creating UI layout diagrams for fronten
 - **Shape Tools**: Draw rectangles and circles with click-and-drag
 - **Element Properties**: Each shape becomes a designated HTML element (`<div>`, `<main>`, `<section>`, etc.)
 - **Real-time Styling**: Change fill colors, border colors, border styles, and border width
-- **Selection & Editing**: Click to select shapes and edit their properties
-- **PNG Export**: Export your diagrams as high-quality PNG images
+- **Transparency Support**: Adjust fill opacity while keeping borders and labels visible
+- **Selection & Editing**: Click to select shapes, drag to move, resize handles for precise editing
+- **Export Options**: PNG images and HTML code export
+- **Save & Load**: Save diagrams as JSON files and load them back
+- **Auto-Save**: Automatic backup every 30 seconds with recovery on app restart
 
 ### User Interface
-- **Left Toolbar**: Drawing tools, export button, and helpful instructions
-- **Right Properties Panel**: Edit selected shape properties in real-time
-- **Canvas**: Infinite drawing area with grid background
+- **Left Toolbar**: Drawing tools, file operations (Save/Load), and export options
+- **Right Properties Panel**: Edit selected shape properties and canvas background settings
+- **Canvas**: Infinite drawing area with grid background and transparency support
 - **Responsive Design**: Clean, modern interface with consistent styling
 
 ### Navigation Controls
@@ -75,9 +78,12 @@ A Figma-like web application for quickly creating UI layout diagrams for fronten
 - **Pan**: Hold middle mouse button and drag to move around
 - **Select**: Click on shapes to select them
 
-### Export
-- Click the "Export PNG" button in the toolbar
-- The diagram will be downloaded as a PNG file
+### Export & Save
+- **Save**: Click "Save" to download your diagram as a JSON file
+- **Load**: Click "Load" to open a previously saved diagram
+- **Export PNG**: Click "Export PNG" to download as an image
+- **Export HTML**: Click "Export HTML" to get clean HTML code
+- **Auto-Save**: Your work is automatically saved every 30 seconds
 
 ## 📁 Project Structure
 
@@ -142,21 +148,22 @@ The app uses a consistent design system with:
 
 ### Phase 2 (Planned)
 - Advanced shapes (rounded rectangles, ellipses, lines, arrows, text boxes)
-- Comprehensive styling (border radius, opacity, shadows)
-- Typography options (font family, size, weight, alignment)
-- HTML export functionality
+- Comprehensive styling (border radius, shadows, advanced typography)
+- Enhanced selection and editing tools
+- Improved HTML export with CSS separation
 
 ### Phase 3 (Planned)
 - Nesting system for parent-child relationships
 - Layering and z-index management
 - Alignment tools and snap-to-grid
 - Grouping multiple elements
+- Templates and presets
 
 ### Phase 4 (Planned)
-- Save/load functionality with JSON files
-- Auto-save and version history
+- Version history and advanced file management
 - Performance optimizations
 - UI polish and refinements
+- Advanced export options (SVG, multiple formats)
 
 ## 🤝 Contributing
 
@@ -178,6 +185,10 @@ This project is licensed under the ISC License.
 
 ## ✅ Recent Updates
 
+- **Phase 1 Complete**: All core functionality implemented and working
+- **Transparency Support**: Fill-only transparency with visible borders and labels
+- **Save & Load System**: JSON file format with auto-save functionality
+- **Enhanced Export**: PNG and HTML export options
 - **Modernized SCSS**: Migrated from deprecated `@import` to modern `@use` syntax
 - **Eliminated warnings**: Removed all Sass deprecation warnings
 - **Future-proof**: Updated to React 19 and Vite 7

@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
 import { CanvasState, Shape, ToolType } from './types'
-import { exportAsPNG, exportAsHTML } from './utils/helpers'
+import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave } from './utils/helpers'
 import './App.scss'
 
 function App() {
@@ -19,6 +19,28 @@ function App() {
     canvasBackgroundOpacity: 1
   })
   const [currentTool, setCurrentTool] = useState<ToolType>('select')
+
+  // Load auto-saved diagram on app start
+  useEffect(() => {
+    const autoSavedState = loadAutoSave()
+    if (autoSavedState) {
+      const shouldRestore = window.confirm('Found an auto-saved diagram. Would you like to restore it?')
+      if (shouldRestore) {
+        setCanvasState(autoSavedState)
+      } else {
+        clearAutoSave()
+      }
+    }
+  }, [])
+
+  // Auto-save diagram every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      autoSave(canvasState)
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [canvasState])
 
   const handleToolChange = (tool: ToolType) => {
     console.log('Tool changed to:', tool)
@@ -53,6 +75,21 @@ function App() {
     exportAsHTML(canvasState.shapes)
   }
 
+  const handleSave = () => {
+    saveDiagram(canvasState)
+    clearAutoSave() // Clear auto-save after manual save
+  }
+
+  const handleLoad = async (file: File) => {
+    try {
+      const loadedCanvasState = await loadDiagram(file)
+      setCanvasState(loadedCanvasState)
+    } catch (error) {
+      console.error('Failed to load diagram:', error)
+      alert('Failed to load diagram. Please make sure you selected a valid diagram file.')
+    }
+  }
+
   return (
     <div className="app">
       <Toolbar 
@@ -60,6 +97,8 @@ function App() {
         onToolChange={handleToolChange}
         onExportPNG={handleExportPNG}
         onExportHTML={handleExportHTML}
+        onSave={handleSave}
+        onLoad={handleLoad}
       />
       <div className="app-main">
         <Canvas 
