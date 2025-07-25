@@ -14,6 +14,7 @@ export interface Shape {
   borderColor: string
   borderWidth: number
   borderStyle: 'solid' | 'dotted' | 'dashed'
+  opacity: number
   zIndex: number
 }
 
@@ -24,6 +25,8 @@ export interface CanvasState {
   pan: Point
   gridSize: number
   showGrid: boolean
+  canvasBackgroundColor: string
+  canvasBackgroundOpacity: number
 }
 
 export type ToolType = 'select' | 'rectangle' | 'circle' 

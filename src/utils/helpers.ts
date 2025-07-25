@@ -58,7 +58,7 @@ export const generateHTML = (shapes: any[]): string => {
   
   sortedShapes.forEach(shape => {
     const indent = '  '.repeat(2)
-    const style = `style="position: absolute; left: ${shape.position.x}px; top: ${shape.position.y}px; width: ${shape.size.width}px; height: ${shape.size.height}px; background-color: ${shape.fillColor}; border: ${shape.borderWidth}px ${shape.borderStyle} ${shape.borderColor};"`
+    const style = `style="position: absolute; left: ${shape.position.x}px; top: ${shape.position.y}px; width: ${shape.size.width}px; height: ${shape.size.height}px; background-color: ${hexToRgba(shape.fillColor, shape.opacity)}; border: ${shape.borderWidth}px ${shape.borderStyle} ${shape.borderColor};"`
     const classAttr = shape.cssClasses ? ` class="${shape.cssClasses}"` : ''
     
     html += `${indent}<${shape.elementTag}${classAttr} ${style}>\n`
@@ -93,4 +93,17 @@ export const snapToGrid = (value: number, gridSize: number): number => {
 // Clamp value between min and max
 export const clamp = (value: number, min: number, max: number): number => {
   return Math.min(Math.max(value, min), max)
+}
+
+// Convert hex color to rgba with opacity
+export const hexToRgba = (hex: string, opacity: number): string => {
+  // Remove the # if present
+  const cleanHex = hex.replace('#', '')
+  
+  // Parse the hex values
+  const r = parseInt(cleanHex.substr(0, 2), 16)
+  const g = parseInt(cleanHex.substr(2, 2), 16)
+  const b = parseInt(cleanHex.substr(4, 2), 16)
+  
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`
 } 

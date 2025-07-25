@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { CanvasState, Shape, Point, ToolType } from '../types'
-import { generateId } from '../utils/helpers'
+import { generateId, hexToRgba } from '../utils/helpers'
 import './Canvas.scss'
 
 interface CanvasProps {
@@ -217,6 +217,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         borderColor: '#64748b',
         borderWidth: 1,
         borderStyle: 'solid',
+        opacity: 1,
         zIndex: canvasState.shapes.length
       }
 
@@ -459,7 +460,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
               top: screenPos.y,
               width: screenSize.width,
               height: screenSize.height,
-              backgroundColor: shape.fillColor,
+              backgroundColor: hexToRgba(shape.fillColor, shape.opacity),
               border: `${shape.borderWidth * canvasState.zoom}px ${shape.borderStyle} ${shape.borderColor}`,
               borderRadius: shape.type === 'circle' ? '50%' : '0',
               zIndex: shape.zIndex,
@@ -613,7 +614,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       style={{ 
         minHeight: '400px', 
         minWidth: '400px',
-        position: 'relative'
+        position: 'relative',
+        backgroundColor: hexToRgba(canvasState.canvasBackgroundColor, canvasState.canvasBackgroundOpacity)
       }}
     >
       

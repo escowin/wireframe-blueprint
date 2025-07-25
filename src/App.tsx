@@ -14,7 +14,9 @@ function App() {
     zoom: 1,
     pan: { x: 0, y: 0 },
     gridSize: 20,
-    showGrid: true
+    showGrid: true,
+    canvasBackgroundColor: '#ffffff',
+    canvasBackgroundOpacity: 1
   })
   const [currentTool, setCurrentTool] = useState<ToolType>('select')
 
@@ -31,6 +33,13 @@ function App() {
       shapes: prev.shapes.map(shape => 
         shape.id === updatedShape.id ? updatedShape : shape
       )
+    }))
+  }
+
+  const handleCanvasUpdate = (updates: any) => {
+    setCanvasState(prev => ({
+      ...prev,
+      ...updates
     }))
   }
 
@@ -62,6 +71,8 @@ function App() {
         <PropertiesPanel 
           selectedShape={selectedShape}
           onShapeUpdate={handleShapeUpdate}
+          canvasState={canvasState}
+          onCanvasUpdate={handleCanvasUpdate}
         />
       </div>
     </div>

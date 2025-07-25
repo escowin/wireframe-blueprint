@@ -74,6 +74,13 @@
   border: 1px solid $border-color;
   border-radius: $border-radius-sm;
   cursor: pointer;
+  background-image: 
+    linear-gradient(45deg, #ccc 25%, transparent 25%), 
+    linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #ccc 75%), 
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
 }
 
 .range-input {
@@ -107,6 +114,30 @@
   font-size: $font-size-xs;
   color: $text-secondary;
   text-align: center;
+}
+
+.opacity-control {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  
+  .range-input {
+    flex: 1;
+  }
+  
+  .opacity-preview {
+    width: 24px;
+    height: 24px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-sm;
+    background-image: 
+      linear-gradient(45deg, #ccc 25%, transparent 25%), 
+      linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #ccc 75%), 
+      linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 4px 4px;
+    background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+  }
 }
 
 .position-inputs,

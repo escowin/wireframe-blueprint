@@ -1,21 +1,58 @@
 import React from 'react'
 import { Shape } from '../types'
+import { hexToRgba } from '../utils/helpers'
 import './PropertiesPanel.scss'
 
 interface PropertiesPanelProps {
   selectedShape?: Shape | null
   onShapeUpdate?: (shape: Shape) => void
+  canvasState?: any
+  onCanvasUpdate?: (updates: any) => void
 }
 
 const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   selectedShape,
-  onShapeUpdate
+  onShapeUpdate,
+  canvasState,
+  onCanvasUpdate
 }) => {
   if (!selectedShape) {
     return (
       <div className="properties-panel">
-        <div className="properties-empty">
-          <p>Select a shape to edit its properties</p>
+        <div className="properties-header">
+          <h3>Canvas Properties</h3>
+        </div>
+        <div className="properties-content">
+          <div className="property-group">
+            <label className="property-label">Background Color</label>
+            <input
+              type="color"
+              className="input color-input"
+              value={canvasState?.canvasBackgroundColor || '#ffffff'}
+              onChange={(e) => onCanvasUpdate?.({ canvasBackgroundColor: e.target.value })}
+            />
+          </div>
+          <div className="property-group">
+            <label className="property-label">Background Opacity</label>
+            <div className="opacity-control">
+              <input
+                type="range"
+                className="input range-input"
+                min="0"
+                max="1"
+                step="0.1"
+                value={canvasState?.canvasBackgroundOpacity || 1}
+                onChange={(e) => onCanvasUpdate?.({ canvasBackgroundOpacity: parseFloat(e.target.value) })}
+              />
+                             <div 
+                 className="opacity-preview"
+                 style={{
+                   backgroundColor: hexToRgba(canvasState?.canvasBackgroundColor || '#ffffff', canvasState?.canvasBackgroundOpacity || 1)
+                 }}
+               />
+              <span className="range-value">{Math.round((canvasState?.canvasBackgroundOpacity || 1) * 100)}%</span>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -79,6 +116,29 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             value={selectedShape.fillColor}
             onChange={(e) => handlePropertyChange('fillColor', e.target.value)}
           />
+        </div>
+
+        <div className="property-group">
+          <label className="property-label">Opacity</label>
+          <div className="opacity-control">
+            <input
+              type="range"
+              className="input range-input"
+              min="0"
+              max="1"
+              step="0.1"
+              value={selectedShape.opacity}
+              onChange={(e) => handlePropertyChange('opacity', parseFloat(e.target.value))}
+            />
+                         <div 
+               className="opacity-preview"
+               style={{
+                 backgroundColor: hexToRgba(selectedShape.fillColor, selectedShape.opacity),
+                 border: `1px solid ${selectedShape.borderColor}`
+               }}
+             />
+            <span className="range-value">{Math.round(selectedShape.opacity * 100)}%</span>
+          </div>
         </div>
 
         <div className="property-group">

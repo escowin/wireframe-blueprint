@@ -4,7 +4,6 @@
   flex: 1;
   overflow: hidden;
   position: relative;
-  background-color: $background-color;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -40,8 +39,8 @@
 .canvas-shape {
   position: absolute;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: self-start;
+  // justify-content: center;
   min-width: 20px;
   min-height: 20px;
   transition: all 0.1s ease;
