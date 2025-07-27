@@ -1,6 +1,6 @@
-# UI Diagramming App
+# WireframeBlueprint
 
-A Figma-like web application for quickly creating UI layout diagrams for frontend projects. Built with React, TypeScript, and SCSS.
+A Figma-like web application for quickly creating UI layout diagrams and wireframes for frontend projects. Built with React, TypeScript, and SCSS.
 
 ## 🚀 Features (Phase 1 Complete)
 

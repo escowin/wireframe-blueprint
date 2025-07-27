@@ -1,7 +1,7 @@
-# Figma-like UI Diagramming App - Detailed Specification
+# WireframeBlueprint - Detailed Specification
 
 ## Overview
-A web-based diagramming application that allows users to quickly create UI layout diagrams for frontend projects. The app provides an intuitive interface for drawing shapes, organizing elements hierarchically, and exporting diagrams in multiple formats.
+A web-based wireframing and diagramming application that allows users to quickly create UI layout diagrams and blueprints for frontend projects. The app provides an intuitive interface for drawing shapes, organizing elements hierarchically, and exporting diagrams in multiple formats.
 
 ## Core Features
 
