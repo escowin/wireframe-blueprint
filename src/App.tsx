@@ -27,7 +27,7 @@ function App() {
     if (autoSavedState) {
       const shouldRestore = window.confirm('Found an auto-saved diagram. Would you like to restore it?')
       if (shouldRestore) {
-        setCanvasState(autoSavedState)
+        setCanvasState(migrateCanvasState(autoSavedState))
       } else {
         clearAutoSave()
       }
@@ -42,6 +42,18 @@ function App() {
 
     return () => clearInterval(interval)
   }, [canvasState])
+
+  // Migration function to handle existing shapes without elementId property
+  const migrateCanvasState = (canvasState: any): CanvasState => {
+    return {
+      ...canvasState,
+      shapes: canvasState.shapes.map((shape: any) => ({
+        ...shape,
+        elementId: shape.elementId || '', // Add elementId if missing
+        cssClasses: shape.cssClasses || '' // Ensure cssClasses is defined
+      }))
+    }
+  }
 
   const handleToolChange = (tool: ToolType) => {
     console.log('Tool changed to:', tool)
@@ -84,7 +96,7 @@ function App() {
   const handleLoad = async (file: File) => {
     try {
       const loadedCanvasState = await loadDiagram(file)
-      setCanvasState(loadedCanvasState)
+      setCanvasState(migrateCanvasState(loadedCanvasState))
     } catch (error) {
       console.error('Failed to load diagram:', error)
       alert('Failed to load diagram. Please make sure you selected a valid diagram file.')

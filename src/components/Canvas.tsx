@@ -212,6 +212,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         position,
         size: { width, height },
         elementTag: 'div',
+        elementId: '',
         cssClasses: '',
         fillColor: '#e2e8f0',
         borderColor: '#64748b',
@@ -469,8 +470,13 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
           >
             <div className="shape-label">
-              {canvasState.showCssLabels && shape.cssClasses ? (
-                <span>&lt;{shape.elementTag}.{shape.cssClasses.split(' ')[0]}&gt;</span>
+              {canvasState.showCssLabels ? (
+                <span>
+                  &lt;{shape.elementTag}
+                  {shape.elementId && `#${shape.elementId}`}
+                  {shape.cssClasses && shape.cssClasses.split(' ').map(cls => `.${cls}`).join('')}
+                  &gt;
+                </span>
               ) : (
                 <span>&lt;{shape.elementTag}&gt;</span>
               )}

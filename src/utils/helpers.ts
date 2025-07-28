@@ -171,7 +171,19 @@ const renderShapeNode = (node: any, indentLevel: number, allShapes: any[]): stri
   }
   
   const indent = '  '.repeat(indentLevel)
-  const classAttr = node.cssClasses ? ` class="${node.cssClasses}"` : ''
+  
+  // Build attributes string
+  let attributes = ''
+  
+  // Add ID attribute if present
+  if (node.elementId && node.elementId.trim()) {
+    attributes += ` id="${node.elementId.trim()}"`
+  }
+  
+  // Add class attribute if present
+  if (node.cssClasses && node.cssClasses.trim()) {
+    attributes += ` class="${node.cssClasses.trim()}"`
+  }
   
   // Calculate relative position if this is a child
   let style = ''
@@ -188,10 +200,10 @@ const renderShapeNode = (node: any, indentLevel: number, allShapes: any[]): stri
     style = `style="position: absolute; left: ${node.position.x}px; top: ${node.position.y}px; width: ${node.size.width}px; height: ${node.size.height}px; background-color: ${hexToRgba(node.fillColor || '#ffffff', node.opacity || 1)}; border: ${node.borderWidth || 1}px ${node.borderStyle || 'solid'} ${node.borderColor || '#000000'};"`
   }
   
-  let html = `${indent}<${node.elementTag}${classAttr} ${style}>\n`
+  let html = `${indent}<${node.elementTag}${attributes} ${style}>\n`
   
   // Add meaningful placeholder content based on element type
-  const placeholderContent = getPlaceholderContent(node.elementTag, node.cssClasses)
+  const placeholderContent = getPlaceholderContent(node.elementTag, node.cssClasses, node.elementId)
   if (placeholderContent) {
     html += `${indent}  ${placeholderContent}\n`
   }
@@ -209,7 +221,7 @@ const renderShapeNode = (node: any, indentLevel: number, allShapes: any[]): stri
 }
 
 // Generate meaningful placeholder content based on element type
-const getPlaceholderContent = (elementTag: string, cssClasses: string): string => {
+const getPlaceholderContent = (elementTag: string, cssClasses: string, elementId: string): string => {
   const classes = cssClasses ? cssClasses.split(' ') : []
   
   // Check for specific class patterns

@@ -9,7 +9,8 @@ export interface Shape {
   position: Point
   size: { width: number; height: number }
   elementTag: string
-  cssClasses: string
+  elementId: string  // New property for element ID
+  cssClasses: string  // Keep for CSS classes only
   fillColor: string
   borderColor: string
   borderWidth: number

@@ -59,12 +59,45 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   }
 
   const handlePropertyChange = (property: keyof Shape, value: any) => {
-    if (!onShapeUpdate) return
-    
-    const updatedShape = {
-      ...selectedShape,
-      [property]: value
+    if (!selectedShape || !onShapeUpdate) return
+
+    // Validate CSS selector syntax only for non-empty values
+    if (property === 'elementId') {
+      // ID validation: must start with letter, can contain letters, numbers, hyphens, underscores
+      // Allow empty values, only validate if there's content
+      if (value && value.trim() !== '') {
+        const idRegex = /^[a-zA-Z][a-zA-Z0-9_-]*$/
+        if (!idRegex.test(value)) {
+          // Don't update if invalid - could show error message here
+          return
+        }
+      }
     }
+
+    if (property === 'cssClasses') {
+      // Class validation: allow typing freely, only validate final result
+      // Allow empty values, only validate if there's content
+      if (value && value.trim() !== '') {
+        // Clean the value: trim and normalize spaces
+        const cleanedValue = value.trim().replace(/\s+/g, ' ')
+        
+        // Split by spaces and validate each class individually
+        const classes = cleanedValue.split(' ').filter(cls => cls.trim() !== '')
+        const isValid = classes.every(cls => /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(cls))
+        
+        if (!isValid) {
+          // Don't update if invalid - could show error message here
+          return
+        }
+        
+        // Use the cleaned value (normalized spaces)
+        const updatedShape = { ...selectedShape, [property]: cleanedValue }
+        onShapeUpdate(updatedShape)
+        return
+      }
+    }
+
+    const updatedShape = { ...selectedShape, [property]: value }
     onShapeUpdate(updatedShape)
   }
 
@@ -117,14 +150,27 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         </div>
 
         <div className="property-group">
+          <label className="property-label">Element ID</label>
+          <input
+            type="text"
+            className="input"
+            placeholder="e.g., main-content, header-nav, user-profile"
+            value={selectedShape.elementId || ''}
+            onChange={(e) => handlePropertyChange('elementId', e.target.value)}
+          />
+          <small className="property-help">Unique identifier (no spaces, starts with letter)</small>
+        </div>
+
+        <div className="property-group">
           <label className="property-label">CSS Classes</label>
           <input
             type="text"
             className="input"
-            placeholder="e.g., container, wrapper, button-primary"
-            value={selectedShape.cssClasses}
+            placeholder="e.g., container, wrapper, button-primary, card"
+            value={selectedShape.cssClasses || ''}
             onChange={(e) => handlePropertyChange('cssClasses', e.target.value)}
           />
+          <small className="property-help">Space-separated class names (no # prefix)</small>
         </div>
 
         <div className="property-group">

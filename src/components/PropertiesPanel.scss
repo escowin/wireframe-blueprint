@@ -68,6 +68,14 @@
   color: $text-primary;
 }
 
+.property-help {
+  font-size: $font-size-xs;
+  color: $text-secondary;
+  font-style: italic;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
 .color-input {
   height: 40px;
   padding: $spacing-xs;
