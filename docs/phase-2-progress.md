@@ -8,7 +8,7 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 ### ✅ **Essential Features - COMPLETED**
 
 #### 1. HTML Export - ✅ **IMPLEMENTED & ENHANCED**
-- **Feature**: Generate clean HTML structure with inline styles
+- **Feature**: Generate clean HTML structure with simplified output format
 - **Implementation**: Enhanced `generateHTML()` function in `utils/helpers.ts`
 - **Output**: Complete HTML document with proper DOCTYPE, meta tags, and semantic structure
 - **Export**: Added "Export HTML" button to toolbar
@@ -20,6 +20,7 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 - **Hierarchical Structure**: Creates proper DOM nesting instead of flat absolute positioning
 - **Semantic Content**: Provides meaningful placeholder comments based on element types
 - **Robust Error Handling**: Handles edge cases and invalid shape data gracefully
+- **Simplified Output**: Inline styles moved to HTML comments for record keeping, clean HTML elements with only class and id attributes
 
 **Example Output**:
 ```html
@@ -31,18 +32,27 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
   <title>Generated Layout</title>
 </head>
 <body>
-  <header style="position: absolute; left: 50px; top: 25px; width: 800px; height: 100px; background-color: #e2e8f0; border: 2px solid #64748b;">
+  <!-- style="position: absolute; left: 50px; top: 25px; width: 800px; height: 100px; background-color: #e2e8f0; border: 2px solid #64748b;" -->
+  <header class="main-header">
     <!-- header content -->
-    <h1 class="title" style="position: relative; left: 20px; top: 20px; width: 200px; height: 40px; background-color: #ffffff; border: 1px solid #e2e8f0;">
+    <!-- style="position: relative; left: 20px; top: 20px; width: 200px; height: 40px; background-color: #ffffff; border: 1px solid #e2e8f0;" -->
+    <h1 class="title">
       <!-- h1 heading content -->
     </h1>
-    <nav style="position: relative; left: 250px; top: 20px; width: 500px; height: 60px; background-color: #f1f5f9; border: 1px solid #cbd5e1;">
+    <!-- style="position: relative; left: 250px; top: 20px; width: 500px; height: 60px; background-color: #f1f5f9; border: 1px solid #cbd5e1;" -->
+    <nav>
       <!-- nav navigation links -->
     </nav>
   </header>
 </body>
 </html>
 ```
+
+**Key Improvements**:
+- **Clean HTML**: Elements contain only class and id attributes, no inline styles
+- **Style Preservation**: All styling information preserved in HTML comments for record keeping
+- **CSS Ready**: Output is ready for external stylesheet implementation
+- **Developer Friendly**: Clean structure makes it easy to add CSS classes and styling
 
 #### 2. Enhanced Element Properties - ✅ **IMPLEMENTED**
 - **Feature**: More HTML tags and CSS classes support
