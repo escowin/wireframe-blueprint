@@ -15,6 +15,7 @@ function App() {
     pan: { x: 0, y: 0 },
     gridSize: 20,
     showGrid: true,
+    showCssLabels: false,
     canvasBackgroundColor: '#ffffff',
     canvasBackgroundOpacity: 1
   })
@@ -90,6 +91,13 @@ function App() {
     }
   }
 
+  const handleToggleCssLabels = () => {
+    setCanvasState(prev => ({
+      ...prev,
+      showCssLabels: !prev.showCssLabels
+    }))
+  }
+
   return (
     <div className="app">
       <Toolbar 
@@ -99,6 +107,8 @@ function App() {
         onExportHTML={handleExportHTML}
         onSave={handleSave}
         onLoad={handleLoad}
+        showCssLabels={canvasState.showCssLabels}
+        onToggleCssLabels={handleToggleCssLabels}
       />
       <div className="app-main">
         <Canvas 

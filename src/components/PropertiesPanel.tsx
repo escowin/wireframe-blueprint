@@ -69,7 +69,26 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   }
 
   const elementTags = [
-    'div', 'main', 'section', 'header', 'nav', 'aside', 'footer', 'article', 'form', 'button', 'input', 'label', 'ul', 'ol', 'li', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
+    // Semantic
+    'div', 'main', 'section', 'header', 'nav', 'aside', 'footer', 'article', 'span',
+    // Form Elements
+    'form', 'button', 'input', 'label', 'textarea', 'select', 'option', 'fieldset', 'legend', 'checkbox', 'radio',
+    // Lists
+    'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+    // Text
+    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'mark', 'small', 'sub', 'sup',
+    // Media
+    'img', 'video', 'audio', 'figure', 'figcaption',
+    // Table
+    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
+    // Interactive
+    'details', 'summary', 'dialog', 'menu',
+    // Data
+    'data', 'time', 'code', 'pre', 'kbd', 'samp', 'var',
+    // Links
+    'a', 'link',
+    // Meta
+    'meta', 'title', 'style', 'script'
   ]
 
   const borderStyles = ['solid', 'dotted', 'dashed']

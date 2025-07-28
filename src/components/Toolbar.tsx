@@ -9,6 +9,8 @@ interface ToolbarProps {
   onExportHTML?: () => void
   onSave?: () => void
   onLoad?: (file: File) => void
+  showCssLabels?: boolean
+  onToggleCssLabels?: () => void
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -17,7 +19,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onExportPNG,
   onExportHTML,
   onSave,
-  onLoad
+  onLoad,
+  showCssLabels = false,
+  onToggleCssLabels
 }) => {
   const tools = [
     { id: 'select' as ToolType, label: 'Select', icon: '👆' },
@@ -89,6 +93,19 @@ const Toolbar: React.FC<ToolbarProps> = ({
             title="Export as HTML"
           >
             Export HTML
+          </button>
+        </div>
+      </div>
+
+      <div className="toolbar-section">
+        <h3 className="toolbar-title">Display</h3>
+        <div className="toolbar-actions">
+          <button
+            className={`btn ${showCssLabels ? 'btn--primary' : 'btn--secondary'}`}
+            onClick={onToggleCssLabels}
+            title="Toggle CSS class labels"
+          >
+            {showCssLabels ? 'Hide CSS Labels' : 'Show CSS Labels'}
           </button>
         </div>
       </div>

@@ -469,7 +469,11 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
           >
             <div className="shape-label">
-              &lt;{shape.elementTag}&gt;
+              {canvasState.showCssLabels && shape.cssClasses ? (
+                <span>&lt;{shape.elementTag}.{shape.cssClasses.split(' ')[0]}&gt;</span>
+              ) : (
+                <span>&lt;{shape.elementTag}&gt;</span>
+              )}
             </div>
           </div>
           

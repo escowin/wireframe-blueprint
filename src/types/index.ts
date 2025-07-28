@@ -16,6 +16,7 @@ export interface Shape {
   borderStyle: 'solid' | 'dotted' | 'dashed'
   opacity: number
   zIndex: number
+  parentId?: string  // New property for nesting support
 }
 
 export interface CanvasState {
@@ -25,6 +26,7 @@ export interface CanvasState {
   pan: Point
   gridSize: number
   showGrid: boolean
+  showCssLabels: boolean
   canvasBackgroundColor: string
   canvasBackgroundOpacity: number
 }
