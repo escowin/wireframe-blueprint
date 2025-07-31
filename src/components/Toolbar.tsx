@@ -1,5 +1,5 @@
 import React from 'react'
-import { ToolType } from '../types'
+import { ToolType, Shape } from '../types'
 import './Toolbar.scss'
 
 interface ToolbarProps {
@@ -11,6 +11,8 @@ interface ToolbarProps {
   onLoad?: (file: File) => void
   showCssLabels?: boolean
   onToggleCssLabels?: () => void
+  selectedShape?: Shape | null
+  onLayerAction?: (action: 'front' | 'back' | 'forward' | 'backward') => void
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -21,7 +23,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onSave,
   onLoad,
   showCssLabels = false,
-  onToggleCssLabels
+  onToggleCssLabels,
+  selectedShape,
+  onLayerAction
 }) => {
   const tools = [
     { id: 'select' as ToolType, label: 'Select', icon: '👆' },
@@ -47,6 +51,49 @@ const Toolbar: React.FC<ToolbarProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Layer Management Section */}
+      {selectedShape && (
+        <div className="toolbar-section">
+          <h3 className="toolbar-title">Layers</h3>
+          <div className="toolbar-actions">
+            <div className="layer-buttons">
+              <button
+                className="btn btn--primary layer-btn"
+                onClick={() => onLayerAction?.('front')}
+                title="Bring to Front"
+                disabled={!onLayerAction}
+              >
+                ↑ Front
+              </button>
+              <button
+                className="btn btn--secondary layer-btn"
+                onClick={() => onLayerAction?.('forward')}
+                title="Bring Forward"
+                disabled={!onLayerAction}
+              >
+                ↑
+              </button>
+              <button
+                className="btn btn--secondary layer-btn"
+                onClick={() => onLayerAction?.('backward')}
+                title="Send Backward"
+                disabled={!onLayerAction}
+              >
+                ↓
+              </button>
+              <button
+                className="btn btn--primary layer-btn"
+                onClick={() => onLayerAction?.('back')}
+                title="Send to Back"
+                disabled={!onLayerAction}
+              >
+                ↓ Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="toolbar-section">
         <h3 className="toolbar-title">File</h3>

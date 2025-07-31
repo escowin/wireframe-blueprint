@@ -3,7 +3,7 @@ import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
 import { CanvasState, Shape, ToolType } from './types'
-import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave } from './utils/helpers'
+import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward } from './utils/helpers'
 import './App.scss'
 
 function App() {
@@ -43,14 +43,34 @@ function App() {
     return () => clearInterval(interval)
   }, [canvasState])
 
-  // Migration function to handle existing shapes without elementId property
+  // Migration function to handle existing shapes without new properties
   const migrateCanvasState = (canvasState: any): CanvasState => {
     return {
       ...canvasState,
       shapes: canvasState.shapes.map((shape: any) => ({
         ...shape,
         elementId: shape.elementId || '', // Add elementId if missing
-        cssClasses: shape.cssClasses || '' // Ensure cssClasses is defined
+        cssClasses: shape.cssClasses || '', // Ensure cssClasses is defined
+        borderRadius: shape.borderRadius ?? 0, // Add border radius if missing
+        boxShadow: shape.boxShadow ?? {
+          offsetX: 0,
+          offsetY: 0,
+          blurRadius: 0,
+          spreadRadius: 0,
+          color: '#000000',
+          enabled: false
+        },
+        typography: shape.typography ?? {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: 14,
+          fontWeight: 'normal',
+          fontColor: '#000000',
+          textAlign: 'left',
+          lineHeight: 1.2,
+          letterSpacing: 0,
+          textDecoration: 'none',
+          textTransform: 'none'
+        }
       }))
     }
   }
@@ -68,6 +88,41 @@ function App() {
       shapes: prev.shapes.map(shape => 
         shape.id === updatedShape.id ? updatedShape : shape
       )
+    }))
+  }
+
+  const handleShapesUpdate = (updatedShapes: Shape[]) => {
+    setCanvasState(prev => ({
+      ...prev,
+      shapes: updatedShapes
+    }))
+  }
+
+  const handleLayerAction = (action: 'front' | 'back' | 'forward' | 'backward') => {
+    if (!selectedShape) return
+    
+    let updatedShapes: Shape[]
+    
+    switch (action) {
+      case 'front':
+        updatedShapes = bringToFront(canvasState.shapes, selectedShape.id)
+        break
+      case 'back':
+        updatedShapes = sendToBack(canvasState.shapes, selectedShape.id)
+        break
+      case 'forward':
+        updatedShapes = bringForward(canvasState.shapes, selectedShape.id)
+        break
+      case 'backward':
+        updatedShapes = sendBackward(canvasState.shapes, selectedShape.id)
+        break
+      default:
+        return
+    }
+    
+    setCanvasState(prev => ({
+      ...prev,
+      shapes: updatedShapes
     }))
   }
 
@@ -121,6 +176,8 @@ function App() {
         onLoad={handleLoad}
         showCssLabels={canvasState.showCssLabels}
         onToggleCssLabels={handleToggleCssLabels}
+        selectedShape={selectedShape}
+        onLayerAction={handleLayerAction}
       />
       <div className="app-main">
         <Canvas 
@@ -132,6 +189,7 @@ function App() {
         <PropertiesPanel 
           selectedShape={selectedShape}
           onShapeUpdate={handleShapeUpdate}
+          onShapesUpdate={handleShapesUpdate}
           canvasState={canvasState}
           onCanvasUpdate={handleCanvasUpdate}
         />

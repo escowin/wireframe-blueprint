@@ -18,6 +18,30 @@ export interface Shape {
   opacity: number
   zIndex: number
   parentId?: string  // New property for nesting support
+  
+  // Comprehensive Styling Properties (Phase 2)
+  borderRadius: number  // Border radius in pixels
+  boxShadow: {
+    offsetX: number
+    offsetY: number
+    blurRadius: number
+    spreadRadius: number
+    color: string
+    enabled: boolean
+  }
+  
+  // Typography Properties (Phase 2)
+  typography: {
+    fontFamily: string
+    fontSize: number
+    fontWeight: 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
+    fontColor: string
+    textAlign: 'left' | 'center' | 'right' | 'justify'
+    lineHeight: number
+    letterSpacing: number
+    textDecoration: 'none' | 'underline' | 'line-through' | 'overline'
+    textTransform: 'none' | 'uppercase' | 'lowercase' | 'capitalize'
+  }
 }
 
 export interface CanvasState {

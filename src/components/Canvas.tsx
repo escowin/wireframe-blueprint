@@ -219,7 +219,27 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         borderWidth: 1,
         borderStyle: 'solid',
         opacity: 1,
-        zIndex: canvasState.shapes.length
+        zIndex: canvasState.shapes.length,
+        borderRadius: 0,
+        boxShadow: {
+          offsetX: 0,
+          offsetY: 0,
+          blurRadius: 0,
+          spreadRadius: 0,
+          color: '#000000',
+          enabled: false
+        },
+        typography: {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: 14,
+          fontWeight: 'normal',
+          fontColor: '#000000',
+          textAlign: 'left',
+          lineHeight: 1.2,
+          letterSpacing: 0,
+          textDecoration: 'none',
+          textTransform: 'none'
+        }
       }
 
       // Update canvas with temporary shape
@@ -463,9 +483,21 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
               height: screenSize.height,
               backgroundColor: hexToRgba(shape.fillColor, shape.opacity),
               border: `${shape.borderWidth * canvasState.zoom}px ${shape.borderStyle} ${shape.borderColor}`,
-              borderRadius: shape.type === 'circle' ? '50%' : '0',
+              borderRadius: shape.type === 'circle' ? '50%' : `${shape.borderRadius * canvasState.zoom}px`,
               zIndex: shape.zIndex,
-              cursor: isSelected ? 'move' : 'pointer'
+              cursor: isSelected ? 'move' : 'pointer',
+              boxShadow: shape.boxShadow.enabled 
+                ? `${shape.boxShadow.offsetX * canvasState.zoom}px ${shape.boxShadow.offsetY * canvasState.zoom}px ${shape.boxShadow.blurRadius * canvasState.zoom}px ${shape.boxShadow.spreadRadius * canvasState.zoom}px ${shape.boxShadow.color}`
+                : 'none',
+              fontFamily: shape.typography.fontFamily,
+              fontSize: `${shape.typography.fontSize * canvasState.zoom}px`,
+              fontWeight: shape.typography.fontWeight,
+              color: shape.typography.fontColor,
+              textAlign: shape.typography.textAlign,
+              lineHeight: shape.typography.lineHeight,
+              letterSpacing: `${shape.typography.letterSpacing * canvasState.zoom}px`,
+              textDecoration: shape.typography.textDecoration,
+              textTransform: shape.typography.textTransform
             }}
 
           >

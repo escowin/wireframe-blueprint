@@ -142,6 +142,50 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 - **New Nested Structure**: Hierarchical organization that mirrors HTML structure
 - **Benefits**: Immediate visual understanding of layout hierarchy and element relationships
 
+#### 6. Layer Management - ✅ **NEWLY IMPLEMENTED**
+- **Feature**: Comprehensive layer management system for overlapping elements
+- **Implementation**: Added layer management functions and UI controls
+- **Functions**: `bringToFront`, `sendToBack`, `bringForward`, `sendBackward`, `getLayerInfo`
+- **UI Controls**: Layer management section in PropertiesPanel and Toolbar
+- **Visual Feedback**: Layer position indicators and disabled states for edge cases
+
+**Layer Management Features**:
+- **Bring to Front**: Move selected shape to the highest z-index layer
+- **Send to Back**: Move selected shape to the lowest z-index layer
+- **Bring Forward**: Move selected shape up one layer
+- **Send Backward**: Move selected shape down one layer
+- **Direct Z-Index Control**: Manual z-index input for precise control
+- **Layer Information**: Display current layer position and total layer count
+- **Smart Disabling**: Buttons are disabled when actions are not applicable
+
+**UI Implementation**:
+- **Properties Panel**: Dedicated layer management section with visual controls
+- **Toolbar**: Quick layer action buttons for selected shapes
+- **Visual Design**: Consistent styling with primary/secondary button hierarchy
+- **Responsive Layout**: Grid-based button arrangement for efficient space usage
+
+**Technical Implementation**:
+- **Helper Functions**: Pure functions for layer manipulation in `utils/helpers.ts`
+- **State Management**: Integrated with existing canvas state system
+- **Type Safety**: Full TypeScript support with proper type annotations
+- **Error Handling**: Graceful handling of edge cases and invalid operations
+
+**Example Usage**:
+```typescript
+// Bring shape to front
+const updatedShapes = bringToFront(shapes, 'shape-id')
+
+// Get layer information
+const layerInfo = getLayerInfo(shapes, 'shape-id')
+// Returns: { currentLayer: 2, totalLayers: 4, layerPosition: 'Middle' }
+```
+
+**Benefits for Wireframing**:
+- **Realistic Layouts**: Create overlapping elements like modals, dropdowns, tooltips
+- **Quick Adjustments**: Easily change element hierarchy without redrawing
+- **Visual Clarity**: Clear indication of layer relationships
+- **Export Accuracy**: Proper z-index values in generated HTML
+
 ### ❌ **Features Skipped (As Requested)**
 
 #### 1. Advanced Shapes - ❌ **SKIPPED**
@@ -177,16 +221,25 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 - **UPDATED**: `saveDiagram()` function to use nested structure
 - **UPDATED**: `loadDiagram()` function with version detection and conversion
 - **UPDATED**: `autoSave()` and `loadAutoSave()` functions for nested structure
+- **NEW**: Added layer management functions (`bringToFront`, `sendToBack`, `bringForward`, `sendBackward`, `getLayerInfo`)
 
 #### 2. **`src/components/Toolbar.tsx`**
 - Added HTML export button
 - Updated interface to support multiple export types
 - Added secondary button styling
+- **NEW**: Added layer management section with action buttons
+- **NEW**: Added `selectedShape` and `onLayerAction` props
+- **NEW**: Conditional rendering of layer controls when shape is selected
 
 #### 3. **`src/components/PropertiesPanel.tsx`**
 - Expanded HTML element tag options
 - Added CSS classes input field
 - Enhanced property editing interface
+- **NEW**: Added comprehensive layer management section
+- **NEW**: Added layer information display (position, layer count)
+- **NEW**: Added layer control buttons with visual feedback
+- **NEW**: Added direct z-index input control
+- **NEW**: Added `onShapesUpdate` prop for layer operations
 
 #### 4. **`src/types/index.ts`**
 - Added `cssClasses` property to Shape interface
@@ -199,19 +252,35 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 - Added `showCssLabels` to initial canvas state
 - Added `handleToggleCssLabels` function
 - Updated Toolbar props to include CSS label toggle
+- **NEW**: Added `handleShapesUpdate` function for layer management
+- **NEW**: Added `handleLayerAction` function for toolbar layer controls
+- **NEW**: Updated PropertiesPanel props to include `onShapesUpdate`
 
 #### 6. **`src/components/Toolbar.scss`**
 - Added button styles for primary and secondary buttons
 - Enhanced UI with hover effects and transitions
+- **NEW**: Added layer button styles with grid layout
+- **NEW**: Added disabled state styling for layer buttons
 
 #### 7. **`src/components/Canvas.tsx`**
 - Updated shape label rendering to support CSS class display
 - Added conditional logic for showing CSS classes in shorthand format
 
-#### 8. **`src/utils/test-nested-json.js`** - **NEW**
+#### 8. **`src/components/PropertiesPanel.scss`**
+- **NEW**: Added comprehensive layer management styles
+- **NEW**: Added layer info display styling
+- **NEW**: Added layer control button styles with hover effects
+- **NEW**: Added z-index input styling
+
+#### 9. **`src/utils/test-nested-json.js`** - **NEW**
 - Test file demonstrating nested JSON structure conversion
 - Example data showing header with nested navigation elements
 - Validation of hierarchical organization benefits
+
+#### 10. **`src/utils/test-layer-management.js`** - **NEW**
+- Test file for layer management functions
+- Comprehensive testing of all layer operations
+- Validation of z-index manipulation logic
 
 ### Code Examples
 
@@ -238,6 +307,36 @@ export const generateHTML = (shapes: any[]): string => {
 }
 ```
 
+#### NEW: Layer Management Functions
+```typescript
+export const bringToFront = (shapes: any[], shapeId: string): any[] => {
+  const maxZIndex = Math.max(...shapes.map(s => s.zIndex), 0)
+  return shapes.map(shape => 
+    shape.id === shapeId 
+      ? { ...shape, zIndex: maxZIndex + 1 }
+      : shape
+  )
+}
+
+export const getLayerInfo = (shapes: any[], shapeId: string): { currentLayer: number; totalLayers: number; layerPosition: string } => {
+  const sortedShapes = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
+  const currentIndex = sortedShapes.findIndex(s => s.id === shapeId)
+  
+  if (currentIndex === -1) {
+    return { currentLayer: 0, totalLayers: shapes.length, layerPosition: 'Unknown' }
+  }
+  
+  const totalLayers = sortedShapes.length
+  const currentLayer = currentIndex + 1
+  
+  let layerPosition = 'Middle'
+  if (currentLayer === 1) layerPosition = 'Bottom'
+  else if (currentLayer === totalLayers) layerPosition = 'Top'
+  
+  return { currentLayer, totalLayers, layerPosition }
+}
+```
+
 #### NEW: Nested JSON Structure Conversion
 ```typescript
 export const convertToNestedStructure = (shapes: any[]): any => {
@@ -249,7 +348,7 @@ export const convertToNestedStructure = (shapes: any[]): any => {
   
   // Convert tree to nested object structure
   const convertNodeToNested = (node: any): any => {
-    const nestedShape = {
+    const nestedShape: any = {
       id: node.id,
       type: node.type,
       position: node.position,
@@ -277,7 +376,7 @@ export const convertToNestedStructure = (shapes: any[]): any => {
 }
 ```
 
-#### Enhanced Save Function with Nested Structure
+#### NEW: Enhanced Save Function with Nested Structure
 ```typescript
 export const saveDiagram = (canvasState: any): void => {
   // Convert shapes to nested structure for better readability
@@ -305,7 +404,7 @@ export const saveDiagram = (canvasState: any): void => {
 }
 ```
 
-#### Backward Compatible Load Function
+#### NEW: Backward Compatible Load Function
 ```typescript
 export const loadDiagram = (file: File): Promise<any> => {
   return new Promise((resolve, reject) => {
@@ -345,7 +444,65 @@ export const loadDiagram = (file: File): Promise<any> => {
 }
 ```
 
-#### Nesting Detection Algorithm
+#### NEW: Layer Management UI Implementation
+```typescript
+// PropertiesPanel - Layer Management Section
+const handleLayerAction = (action: 'front' | 'back' | 'forward' | 'backward') => {
+  if (!selectedShape || !canvasState?.shapes || !onShapesUpdate) return
+
+  let updatedShapes: Shape[]
+  
+  switch (action) {
+    case 'front':
+      updatedShapes = bringToFront(canvasState.shapes, selectedShape.id)
+      break
+    case 'back':
+      updatedShapes = sendToBack(canvasState.shapes, selectedShape.id)
+      break
+    case 'forward':
+      updatedShapes = bringForward(canvasState.shapes, selectedShape.id)
+      break
+    case 'backward':
+      updatedShapes = sendBackward(canvasState.shapes, selectedShape.id)
+      break
+    default:
+      return
+  }
+  
+  onShapesUpdate(updatedShapes)
+}
+
+// App.tsx - Layer Action Handler
+const handleLayerAction = (action: 'front' | 'back' | 'forward' | 'backward') => {
+  if (!selectedShape) return
+  
+  let updatedShapes: Shape[]
+  
+  switch (action) {
+    case 'front':
+      updatedShapes = bringToFront(canvasState.shapes, selectedShape.id)
+      break
+    case 'back':
+      updatedShapes = sendToBack(canvasState.shapes, selectedShape.id)
+      break
+    case 'forward':
+      updatedShapes = bringForward(canvasState.shapes, selectedShape.id)
+      break
+    case 'backward':
+      updatedShapes = sendBackward(canvasState.shapes, selectedShape.id)
+      break
+    default:
+      return
+  }
+  
+  setCanvasState(prev => ({
+    ...prev,
+    shapes: updatedShapes
+  }))
+}
+```
+
+#### NEW: Nesting Detection Algorithm
 ```typescript
 const detectNesting = (shapes: any[]): any[] => {
   // Filter out invalid shapes
@@ -362,10 +519,35 @@ const detectNesting = (shapes: any[]): any[] => {
   const sortedShapes = [...validShapes].sort((a, b) => a.zIndex - b.zIndex)
   
   return sortedShapes.map(shape => {
-    // Find potential parents based on spatial containment
+    // Find the best parent candidate
     const potentialParents = sortedShapes.filter(potentialParent => {
-      // Calculate overlap percentage and determine parent-child relationship
-      // Returns true if parent contains at least 50% of child's area
+      if (potentialParent.id === shape.id) return false
+      
+      const parentLeft = potentialParent.position.x
+      const parentTop = potentialParent.position.y
+      const parentRight = parentLeft + potentialParent.size.width
+      const parentBottom = parentTop + potentialParent.size.height
+      
+      const childLeft = shape.position.x
+      const childTop = shape.position.y
+      const childRight = childLeft + shape.size.width
+      const childBottom = childTop + shape.size.height
+      
+      // Check if child is contained within parent
+      const isContained = childLeft >= parentLeft && 
+                         childTop >= parentTop && 
+                         childRight <= parentRight && 
+                         childBottom <= parentBottom
+      
+      // Calculate overlap percentage
+      const overlapWidth = Math.max(0, Math.min(childRight, parentRight) - Math.max(childLeft, parentLeft))
+      const overlapHeight = Math.max(0, Math.min(childBottom, parentBottom) - Math.max(childTop, parentTop))
+      const overlapArea = overlapWidth * overlapHeight
+      const childArea = shape.size.width * shape.size.height
+      const overlapPercentage = overlapArea / childArea
+      
+      // Return true if parent contains at least 50% of child's area
+      return isContained && overlapPercentage >= 0.5
     })
     
     // Choose the smallest parent that contains the shape
@@ -383,7 +565,7 @@ const detectNesting = (shapes: any[]): any[] => {
 }
 ```
 
-#### Enhanced Shape Interface
+#### NEW: Enhanced Shape Interface
 ```typescript
 export interface Shape {
   id: string
@@ -402,7 +584,7 @@ export interface Shape {
 }
 ```
 
-#### CSS Label Display Logic
+#### NEW: CSS Label Display Logic
 ```typescript
 // In Canvas component - shape label rendering
 <div className="shape-label">
@@ -428,15 +610,23 @@ export interface Shape {
 - **Files Modified**: `src/utils/helpers.ts`
 - **Status**: ✅ Resolved
 
+### **TypeScript Errors - ✅ FIXED**
+- **Issue**: TypeScript compilation errors in PropertiesPanel and helpers
+- **Root Cause**: Missing type annotations for callback parameters and object properties
+- **Solution**: Added proper type annotations for filter/every callbacks and nestedShape object
+- **Files Modified**: `src/components/PropertiesPanel.tsx`, `src/utils/helpers.ts`
+- **Status**: ✅ Resolved
+
 ## Current Status
 
-### ✅ **Phase 2 Complete**
+### ✅ **Phase 2 Complete with Layer Management**
 - **HTML Export**: Fully functional with hierarchical structure and error handling
 - **Enhanced Properties**: Comprehensive element tag and CSS class support
 - **Export Options**: Both PNG and HTML export available
 - **UI Improvements**: Better button styling and user experience
 - **Bug Fixes**: All known issues resolved
 - **Nested JSON Structure**: Hierarchical organization for better readability and understanding
+- **Layer Management**: Comprehensive layer control system for overlapping elements
 
 ### 🎯 **Ready for Phase 3**
 The application now has a solid foundation for layout planning with:
@@ -446,12 +636,13 @@ The application now has a solid foundation for layout planning with:
 - **Export Flexibility**: Both visual and code exports
 - **Robust Error Handling**: Graceful handling of edge cases
 - **Organized Data**: Nested JSON structure that mirrors HTML hierarchy
+- **Layer Control**: Full control over element layering for realistic wireframes
 
 ## Next Steps
 
 ### **Phase 3: Layout & Hierarchy**
 1. **Nesting System**: Drag and drop shapes inside other shapes
-2. **Layering**: Z-index management and layer panel
+2. **Layering**: Z-index management and layer panel ✅ **COMPLETED**
 3. **Alignment Tools**: Snap to grid, snap to edges
 4. **Grouping**: Group/ungroup multiple elements
 5. **Templates**: Pre-built layout templates
@@ -465,6 +656,6 @@ The application now has a solid foundation for layout planning with:
 ---
 
 **Date**: December 2024  
-**Status**: ✅ Phase 2 Complete  
-**Progress**: 100% of revised Phase 2 goals  
-**Quality**: Production-ready implementation with comprehensive error handling and organized data structure 
+**Status**: ✅ Phase 2 Complete with Layer Management  
+**Progress**: 100% of revised Phase 2 goals + Layer Management  
+**Quality**: Production-ready implementation with comprehensive error handling, organized data structure, and full layer management capabilities 

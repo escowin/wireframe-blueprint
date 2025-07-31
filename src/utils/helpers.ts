@@ -50,10 +50,40 @@ export const exportAsPNG = (canvasElement: HTMLDivElement): void => {
   img.src = url
 }
 
+// Ensure shape has all required properties with defaults
+const ensureShapeProperties = (shape: any): any => {
+  return {
+    ...shape,
+    borderRadius: shape.borderRadius ?? 0,
+    boxShadow: shape.boxShadow ?? {
+      offsetX: 0,
+      offsetY: 0,
+      blurRadius: 0,
+      spreadRadius: 0,
+      color: '#000000',
+      enabled: false
+    },
+    typography: shape.typography ?? {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: 14,
+      fontWeight: 'normal',
+      fontColor: '#000000',
+      textAlign: 'left',
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      textDecoration: 'none',
+      textTransform: 'none'
+    }
+  }
+}
+
 // Generate HTML from shapes with nesting support
 export const generateHTML = (shapes: any[]): string => {
+  // Ensure all shapes have the new properties
+  const shapesWithDefaults = shapes.map(ensureShapeProperties)
+  
   // First, detect parent-child relationships based on spatial containment
-  const shapesWithParents = detectNesting(shapes)
+  const shapesWithParents = detectNesting(shapesWithDefaults)
   
   // Build a tree structure
   const shapeTree = buildShapeTree(shapesWithParents)
@@ -170,37 +200,82 @@ const renderShapeNode = (node: any, indentLevel: number, allShapes: any[]): stri
     return ''
   }
   
+  // Ensure node has all required properties
+  const shape = ensureShapeProperties(node)
+  
   const indent = '  '.repeat(indentLevel)
   
   // Build attributes string
   let attributes = ''
   
   // Add ID attribute if present
-  if (node.elementId && node.elementId.trim()) {
-    attributes += ` id="${node.elementId.trim()}"`
+  if (shape.elementId && shape.elementId.trim()) {
+    attributes += ` id="${shape.elementId.trim()}"`
   }
   
   // Add class attribute if present
-  if (node.cssClasses && node.cssClasses.trim()) {
-    attributes += ` class="${node.cssClasses.trim()}"`
+  if (shape.cssClasses && shape.cssClasses.trim()) {
+    attributes += ` class="${shape.cssClasses.trim()}"`
   }
   
-  let html = `${indent}<${node.elementTag}${attributes}>\n`
+  // Build inline styles for comprehensive styling and typography
+  let inlineStyles = ''
+  
+  // Basic styling
+  if (shape.fillColor) {
+    inlineStyles += `background-color: ${hexToRgba(shape.fillColor, shape.opacity || 1)}; `
+  }
+  if (shape.borderColor && shape.borderWidth) {
+    inlineStyles += `border: ${shape.borderWidth}px ${shape.borderStyle || 'solid'} ${shape.borderColor}; `
+  }
+  if (shape.borderRadius !== undefined) {
+    inlineStyles += `border-radius: ${shape.borderRadius}px; `
+  }
+  if (shape.zIndex !== undefined) {
+    inlineStyles += `z-index: ${shape.zIndex}; `
+  }
+  
+  // Box shadow
+  if (shape.boxShadow && shape.boxShadow.enabled) {
+    const shadow = shape.boxShadow
+    inlineStyles += `box-shadow: ${shadow.offsetX}px ${shadow.offsetY}px ${shadow.blurRadius}px ${shadow.spreadRadius}px ${shadow.color}; `
+  }
+  
+  // Typography
+  if (shape.typography) {
+    const typo = shape.typography
+    if (typo.fontFamily) inlineStyles += `font-family: ${typo.fontFamily}; `
+    if (typo.fontSize) inlineStyles += `font-size: ${typo.fontSize}px; `
+    if (typo.fontWeight) inlineStyles += `font-weight: ${typo.fontWeight}; `
+    if (typo.fontColor) inlineStyles += `color: ${typo.fontColor}; `
+    if (typo.textAlign) inlineStyles += `text-align: ${typo.textAlign}; `
+    if (typo.lineHeight) inlineStyles += `line-height: ${typo.lineHeight}; `
+    if (typo.letterSpacing) inlineStyles += `letter-spacing: ${typo.letterSpacing}px; `
+    if (typo.textDecoration && typo.textDecoration !== 'none') inlineStyles += `text-decoration: ${typo.textDecoration}; `
+    if (typo.textTransform && typo.textTransform !== 'none') inlineStyles += `text-transform: ${typo.textTransform}; `
+  }
+  
+  // Add style attribute if we have styles
+  if (inlineStyles.trim()) {
+    attributes += ` style="${inlineStyles.trim()}"`
+  }
+  
+  let html = `${indent}<${shape.elementTag}${attributes}>\n`
   
   // Add meaningful placeholder content based on element type
-  const placeholderContent = getPlaceholderContent(node.elementTag, node.cssClasses, node.elementId)
+  const placeholderContent = getPlaceholderContent(shape.elementTag, shape.cssClasses, shape.elementId)
   if (placeholderContent) {
     html += `${indent}  ${placeholderContent}\n`
   }
   
   // Render children
-  if (node.children && node.children.length > 0) {
-    node.children.forEach((child: any) => {
+  if (shape.children && shape.children.length > 0) {
+    shape.children.forEach((child: any) => {
       html += renderShapeNode(child, indentLevel + 1, allShapes)
     })
   }
   
-  html += `${indent}</${node.elementTag}>\n`
+  html += `${indent}</${shape.elementTag}>\n`
   
   return html
 }
@@ -314,7 +389,7 @@ export const convertToNestedStructure = (shapes: any[]): any => {
   
   // Convert tree to nested object structure
   const convertNodeToNested = (node: any): any => {
-    const nestedShape = {
+    const nestedShape: any = {
       id: node.id,
       type: node.type,
       position: node.position,
@@ -490,9 +565,84 @@ export const loadAutoSave = (): any | null => {
 
 // Clear auto-saved diagram
 export const clearAutoSave = (): void => {
-  try {
-    localStorage.removeItem('diagram-autosave')
-  } catch (error) {
-    console.warn('Failed to clear auto-save:', error)
+  localStorage.removeItem('diagramAutoSave')
+}
+
+// Layer management functions
+export const bringToFront = (shapes: any[], shapeId: string): any[] => {
+  const maxZIndex = Math.max(...shapes.map(s => s.zIndex), 0)
+  return shapes.map(shape => 
+    shape.id === shapeId 
+      ? { ...shape, zIndex: maxZIndex + 1 }
+      : shape
+  )
+}
+
+export const sendToBack = (shapes: any[], shapeId: string): any[] => {
+  const minZIndex = Math.min(...shapes.map(s => s.zIndex), 0)
+  return shapes.map(shape => 
+    shape.id === shapeId 
+      ? { ...shape, zIndex: minZIndex - 1 }
+      : shape
+  )
+}
+
+export const bringForward = (shapes: any[], shapeId: string): any[] => {
+  const sortedShapes = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
+  const currentIndex = sortedShapes.findIndex(s => s.id === shapeId)
+  
+  if (currentIndex === -1 || currentIndex === sortedShapes.length - 1) {
+    return shapes // Already at front or not found
   }
+  
+  const targetShape = sortedShapes[currentIndex]
+  const nextShape = sortedShapes[currentIndex + 1]
+  
+  return shapes.map(shape => {
+    if (shape.id === shapeId) {
+      return { ...shape, zIndex: nextShape.zIndex + 1 }
+    } else if (shape.id === nextShape.id) {
+      return { ...shape, zIndex: targetShape.zIndex }
+    }
+    return shape
+  })
+}
+
+export const sendBackward = (shapes: any[], shapeId: string): any[] => {
+  const sortedShapes = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
+  const currentIndex = sortedShapes.findIndex(s => s.id === shapeId)
+  
+  if (currentIndex === -1 || currentIndex === 0) {
+    return shapes // Already at back or not found
+  }
+  
+  const targetShape = sortedShapes[currentIndex]
+  const prevShape = sortedShapes[currentIndex - 1]
+  
+  return shapes.map(shape => {
+    if (shape.id === shapeId) {
+      return { ...shape, zIndex: prevShape.zIndex - 1 }
+    } else if (shape.id === prevShape.id) {
+      return { ...shape, zIndex: targetShape.zIndex }
+    }
+    return shape
+  })
+}
+
+export const getLayerInfo = (shapes: any[], shapeId: string): { currentLayer: number; totalLayers: number; layerPosition: string } => {
+  const sortedShapes = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
+  const currentIndex = sortedShapes.findIndex(s => s.id === shapeId)
+  
+  if (currentIndex === -1) {
+    return { currentLayer: 0, totalLayers: shapes.length, layerPosition: 'Unknown' }
+  }
+  
+  const totalLayers = sortedShapes.length
+  const currentLayer = currentIndex + 1
+  
+  let layerPosition = 'Middle'
+  if (currentLayer === 1) layerPosition = 'Bottom'
+  else if (currentLayer === totalLayers) layerPosition = 'Top'
+  
+  return { currentLayer, totalLayers, layerPosition }
 } 

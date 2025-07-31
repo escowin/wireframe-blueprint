@@ -1,6 +1,6 @@
 import React from 'react'
 import { Shape } from '../types'
-import { hexToRgba } from '../utils/helpers'
+import { hexToRgba, getLayerInfo, bringToFront, sendToBack, bringForward, sendBackward } from '../utils/helpers'
 import './PropertiesPanel.scss'
 
 interface PropertiesPanelProps {
@@ -8,13 +8,15 @@ interface PropertiesPanelProps {
   onShapeUpdate?: (shape: Shape) => void
   canvasState?: any
   onCanvasUpdate?: (updates: any) => void
+  onShapesUpdate?: (shapes: Shape[]) => void
 }
 
 const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   selectedShape,
   onShapeUpdate,
   canvasState,
-  onCanvasUpdate
+  onCanvasUpdate,
+  onShapesUpdate
 }) => {
   if (!selectedShape) {
     return (
@@ -82,8 +84,8 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         const cleanedValue = value.trim().replace(/\s+/g, ' ')
         
         // Split by spaces and validate each class individually
-        const classes = cleanedValue.split(' ').filter(cls => cls.trim() !== '')
-        const isValid = classes.every(cls => /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(cls))
+        const classes = cleanedValue.split(' ').filter((cls: string) => cls.trim() !== '')
+        const isValid = classes.every((cls: string) => /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(cls))
         
         if (!isValid) {
           // Don't update if invalid - could show error message here
@@ -100,6 +102,35 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     const updatedShape = { ...selectedShape, [property]: value }
     onShapeUpdate(updatedShape)
   }
+
+  const handleLayerAction = (action: 'front' | 'back' | 'forward' | 'backward') => {
+    if (!selectedShape || !canvasState?.shapes || !onShapesUpdate) return
+
+    let updatedShapes: Shape[]
+    
+    switch (action) {
+      case 'front':
+        updatedShapes = bringToFront(canvasState.shapes, selectedShape.id)
+        break
+      case 'back':
+        updatedShapes = sendToBack(canvasState.shapes, selectedShape.id)
+        break
+      case 'forward':
+        updatedShapes = bringForward(canvasState.shapes, selectedShape.id)
+        break
+      case 'backward':
+        updatedShapes = sendBackward(canvasState.shapes, selectedShape.id)
+        break
+      default:
+        return
+    }
+    
+    onShapesUpdate(updatedShapes)
+  }
+
+  const layerInfo = selectedShape && canvasState?.shapes 
+    ? getLayerInfo(canvasState.shapes, selectedShape.id)
+    : { currentLayer: 0, totalLayers: 0, layerPosition: 'Unknown' }
 
   const elementTags = [
     // Semantic
@@ -244,6 +275,117 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </select>
         </div>
 
+        {/* Comprehensive Styling Section */}
+        <div className="property-group">
+          <label className="property-label">Border Radius</label>
+          <input
+            type="range"
+            className="input range-input"
+            min="0"
+            max="50"
+            value={selectedShape.borderRadius}
+            onChange={(e) => handlePropertyChange('borderRadius', parseInt(e.target.value))}
+          />
+          <span className="range-value">{selectedShape.borderRadius}px</span>
+        </div>
+
+        <div className="property-group">
+          <label className="property-label">Box Shadow</label>
+          <div className="shadow-controls">
+            <div className="shadow-toggle">
+              <input
+                type="checkbox"
+                id="shadow-enabled"
+                checked={selectedShape.boxShadow.enabled}
+                onChange={(e) => handlePropertyChange('boxShadow', {
+                  ...selectedShape.boxShadow,
+                  enabled: e.target.checked
+                })}
+              />
+              <label htmlFor="shadow-enabled">Enable Shadow</label>
+            </div>
+            
+            {selectedShape.boxShadow.enabled && (
+              <>
+                <div className="shadow-inputs">
+                  <div className="shadow-input">
+                    <label>Offset X</label>
+                    <input
+                      type="range"
+                      className="input range-input"
+                      min="-20"
+                      max="20"
+                      value={selectedShape.boxShadow.offsetX}
+                      onChange={(e) => handlePropertyChange('boxShadow', {
+                        ...selectedShape.boxShadow,
+                        offsetX: parseInt(e.target.value)
+                      })}
+                    />
+                    <span className="range-value">{selectedShape.boxShadow.offsetX}px</span>
+                  </div>
+                  <div className="shadow-input">
+                    <label>Offset Y</label>
+                    <input
+                      type="range"
+                      className="input range-input"
+                      min="-20"
+                      max="20"
+                      value={selectedShape.boxShadow.offsetY}
+                      onChange={(e) => handlePropertyChange('boxShadow', {
+                        ...selectedShape.boxShadow,
+                        offsetY: parseInt(e.target.value)
+                      })}
+                    />
+                    <span className="range-value">{selectedShape.boxShadow.offsetY}px</span>
+                  </div>
+                  <div className="shadow-input">
+                    <label>Blur</label>
+                    <input
+                      type="range"
+                      className="input range-input"
+                      min="0"
+                      max="30"
+                      value={selectedShape.boxShadow.blurRadius}
+                      onChange={(e) => handlePropertyChange('boxShadow', {
+                        ...selectedShape.boxShadow,
+                        blurRadius: parseInt(e.target.value)
+                      })}
+                    />
+                    <span className="range-value">{selectedShape.boxShadow.blurRadius}px</span>
+                  </div>
+                  <div className="shadow-input">
+                    <label>Spread</label>
+                    <input
+                      type="range"
+                      className="input range-input"
+                      min="0"
+                      max="20"
+                      value={selectedShape.boxShadow.spreadRadius}
+                      onChange={(e) => handlePropertyChange('boxShadow', {
+                        ...selectedShape.boxShadow,
+                        spreadRadius: parseInt(e.target.value)
+                      })}
+                    />
+                    <span className="range-value">{selectedShape.boxShadow.spreadRadius}px</span>
+                  </div>
+                </div>
+                <div className="shadow-color">
+                  <label>Shadow Color</label>
+                  <input
+                    type="color"
+                    className="input color-input"
+                    value={selectedShape.boxShadow.color}
+                    onChange={(e) => handlePropertyChange('boxShadow', {
+                      ...selectedShape.boxShadow,
+                      color: e.target.value
+                    })}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
         <div className="property-group">
           <label className="property-label">Position</label>
           <div className="position-inputs">
@@ -301,6 +443,235 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 })}
               />
             </div>
+          </div>
+        </div>
+
+        {/* Typography Section */}
+        <div className="property-group">
+          <label className="property-label">Typography</label>
+          <div className="typography-controls">
+            <div className="typography-input">
+              <label>Font Family</label>
+              <select
+                className="select"
+                value={selectedShape.typography.fontFamily}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  fontFamily: e.target.value
+                })}
+              >
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Helvetica, sans-serif">Helvetica</option>
+                <option value="Times New Roman, serif">Times New Roman</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="Verdana, sans-serif">Verdana</option>
+                <option value="Courier New, monospace">Courier New</option>
+                <option value="Impact, sans-serif">Impact</option>
+                <option value="Comic Sans MS, cursive">Comic Sans MS</option>
+              </select>
+            </div>
+            
+            <div className="typography-input">
+              <label>Font Size</label>
+              <input
+                type="range"
+                className="input range-input"
+                min="8"
+                max="72"
+                value={selectedShape.typography.fontSize}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  fontSize: parseInt(e.target.value)
+                })}
+              />
+              <span className="range-value">{selectedShape.typography.fontSize}px</span>
+            </div>
+            
+            <div className="typography-input">
+              <label>Font Weight</label>
+              <select
+                className="select"
+                value={selectedShape.typography.fontWeight}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  fontWeight: e.target.value as any
+                })}
+              >
+                <option value="normal">Normal</option>
+                <option value="bold">Bold</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="300">300</option>
+                <option value="400">400</option>
+                <option value="500">500</option>
+                <option value="600">600</option>
+                <option value="700">700</option>
+                <option value="800">800</option>
+                <option value="900">900</option>
+              </select>
+            </div>
+            
+            <div className="typography-input">
+              <label>Font Color</label>
+              <input
+                type="color"
+                className="input color-input"
+                value={selectedShape.typography.fontColor}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  fontColor: e.target.value
+                })}
+              />
+            </div>
+            
+            <div className="typography-input">
+              <label>Text Align</label>
+              <select
+                className="select"
+                value={selectedShape.typography.textAlign}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  textAlign: e.target.value as any
+                })}
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+                <option value="justify">Justify</option>
+              </select>
+            </div>
+            
+            <div className="typography-input">
+              <label>Line Height</label>
+              <input
+                type="range"
+                className="input range-input"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value={selectedShape.typography.lineHeight}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  lineHeight: parseFloat(e.target.value)
+                })}
+              />
+              <span className="range-value">{selectedShape.typography.lineHeight}</span>
+            </div>
+            
+            <div className="typography-input">
+              <label>Letter Spacing</label>
+              <input
+                type="range"
+                className="input range-input"
+                min="-2"
+                max="10"
+                value={selectedShape.typography.letterSpacing}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  letterSpacing: parseInt(e.target.value)
+                })}
+              />
+              <span className="range-value">{selectedShape.typography.letterSpacing}px</span>
+            </div>
+            
+            <div className="typography-input">
+              <label>Text Decoration</label>
+              <select
+                className="select"
+                value={selectedShape.typography.textDecoration}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  textDecoration: e.target.value as any
+                })}
+              >
+                <option value="none">None</option>
+                <option value="underline">Underline</option>
+                <option value="line-through">Line Through</option>
+                <option value="overline">Overline</option>
+              </select>
+            </div>
+            
+            <div className="typography-input">
+              <label>Text Transform</label>
+              <select
+                className="select"
+                value={selectedShape.typography.textTransform}
+                onChange={(e) => handlePropertyChange('typography', {
+                  ...selectedShape.typography,
+                  textTransform: e.target.value as any
+                })}
+              >
+                <option value="none">None</option>
+                <option value="uppercase">Uppercase</option>
+                <option value="lowercase">Lowercase</option>
+                <option value="capitalize">Capitalize</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Layer Management Section */}
+        <div className="property-group">
+          <label className="property-label">Layer Management</label>
+          <div className="layer-info">
+            <div className="layer-position">
+              <span className="layer-label">Position:</span>
+              <span className="layer-value">{layerInfo.layerPosition}</span>
+            </div>
+            <div className="layer-count">
+              <span className="layer-label">Layer:</span>
+              <span className="layer-value">{layerInfo.currentLayer} of {layerInfo.totalLayers}</span>
+            </div>
+          </div>
+          
+          <div className="layer-controls">
+            <div className="layer-row">
+              <button
+                className="layer-btn layer-btn-primary"
+                onClick={() => handleLayerAction('front')}
+                disabled={layerInfo.layerPosition === 'Top'}
+                title="Bring to Front"
+              >
+                ↑ Front
+              </button>
+              <button
+                className="layer-btn layer-btn-secondary"
+                onClick={() => handleLayerAction('forward')}
+                disabled={layerInfo.layerPosition === 'Top'}
+                title="Bring Forward"
+              >
+                ↑
+              </button>
+            </div>
+            <div className="layer-row">
+              <button
+                className="layer-btn layer-btn-secondary"
+                onClick={() => handleLayerAction('backward')}
+                disabled={layerInfo.layerPosition === 'Bottom'}
+                title="Send Backward"
+              >
+                ↓
+              </button>
+              <button
+                className="layer-btn layer-btn-primary"
+                onClick={() => handleLayerAction('back')}
+                disabled={layerInfo.layerPosition === 'Bottom'}
+                title="Send to Back"
+              >
+                ↓ Back
+              </button>
+            </div>
+          </div>
+          
+          <div className="z-index-control">
+            <label className="z-index-label">Z-Index</label>
+            <input
+              type="number"
+              className="input z-index-input"
+              value={selectedShape.zIndex}
+              onChange={(e) => handlePropertyChange('zIndex', parseInt(e.target.value) || 0)}
+              title="Direct z-index control"
+            />
           </div>
         </div>
       </div>

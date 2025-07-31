@@ -171,4 +171,276 @@
     font-size: $font-size-xs;
     padding: $spacing-xs;
   }
+}
+
+// Layer Management Styles
+.layer-info {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: $background-color;
+  border-radius: $border-radius-sm;
+  border: 1px solid $border-color;
+  
+  .layer-position,
+  .layer-count {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .layer-label {
+      font-size: $font-size-xs;
+      color: $text-secondary;
+      font-weight: 500;
+    }
+    
+    .layer-value {
+      font-size: $font-size-xs;
+      color: $text-primary;
+      font-weight: 600;
+      background-color: $surface-color;
+      padding: 2px 6px;
+      border-radius: $border-radius-sm;
+      border: 1px solid $border-color;
+    }
+  }
+}
+
+.layer-controls {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-sm;
+  
+  .layer-row {
+    display: flex;
+    gap: $spacing-xs;
+    
+    .layer-btn {
+      flex: 1;
+      padding: $spacing-xs $spacing-sm;
+      border: 1px solid $border-color;
+      border-radius: $border-radius-sm;
+      background-color: $surface-color;
+      color: $text-primary;
+      font-size: $font-size-xs;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      
+      &:hover:not(:disabled) {
+        background-color: $primary-color;
+        color: white;
+        border-color: $primary-color;
+      }
+      
+      &:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: $background-color;
+        color: $text-secondary;
+      }
+      
+      &.layer-btn-primary {
+        background-color: $primary-color;
+        color: white;
+        border-color: $primary-color;
+        
+        &:hover:not(:disabled) {
+          background-color: darken($primary-color, 10%);
+          border-color: darken($primary-color, 10%);
+        }
+      }
+      
+      &.layer-btn-secondary {
+        background-color: $surface-color;
+        color: $text-primary;
+        border-color: $border-color;
+        
+        &:hover:not(:disabled) {
+          background-color: $primary-color;
+          color: white;
+          border-color: $primary-color;
+        }
+      }
+    }
+  }
+}
+
+.z-index-control {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  
+  .z-index-label {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    font-weight: 500;
+  }
+  
+  .z-index-input {
+    font-size: $font-size-xs;
+    padding: $spacing-xs;
+    text-align: center;
+    font-weight: 600;
+    background-color: $background-color;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-sm;
+    
+    &:focus {
+      border-color: $primary-color;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+    }
+  }
+}
+
+// Shadow Controls
+.shadow-controls {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  
+  .shadow-toggle {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: $primary-color;
+    }
+    
+    label {
+      font-size: $font-size-sm;
+      color: $text-primary;
+      font-weight: 500;
+    }
+  }
+  
+  .shadow-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    
+    .shadow-input {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-xs;
+      
+      label {
+        font-size: $font-size-xs;
+        color: $text-secondary;
+        font-weight: 500;
+      }
+      
+      .range-input {
+        width: 100%;
+      }
+      
+      .range-value {
+        font-size: $font-size-xs;
+        color: $text-secondary;
+        text-align: center;
+        font-weight: 600;
+      }
+    }
+  }
+  
+  .shadow-color {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    
+    label {
+      font-size: $font-size-xs;
+      color: $text-secondary;
+      font-weight: 500;
+    }
+    
+    .color-input {
+      width: 100%;
+      height: 32px;
+      border: 1px solid $border-color;
+      border-radius: $border-radius-sm;
+      cursor: pointer;
+      
+      &:focus {
+        border-color: $primary-color;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      }
+    }
+  }
+}
+
+// Typography Controls
+.typography-controls {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  
+  .typography-input {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    
+    label {
+      font-size: $font-size-xs;
+      color: $text-secondary;
+      font-weight: 500;
+    }
+    
+    .select {
+      width: 100%;
+      padding: $spacing-xs;
+      border: 1px solid $border-color;
+      border-radius: $border-radius-sm;
+      background-color: $surface-color;
+      color: $text-primary;
+      font-size: $font-size-sm;
+      
+      &:focus {
+        border-color: $primary-color;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      }
+    }
+    
+    .range-input {
+      width: 100%;
+    }
+    
+    .range-value {
+      font-size: $font-size-xs;
+      color: $text-secondary;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    .color-input {
+      width: 100%;
+      height: 32px;
+      border: 1px solid $border-color;
+      border-radius: $border-radius-sm;
+      cursor: pointer;
+      
+      &:focus {
+        border-color: $primary-color;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      }
+    }
+  }
 } 
