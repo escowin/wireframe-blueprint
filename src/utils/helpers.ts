@@ -185,28 +185,7 @@ const renderShapeNode = (node: any, indentLevel: number, allShapes: any[]): stri
     attributes += ` class="${node.cssClasses.trim()}"`
   }
   
-  // Generate the style string for record keeping (commented out)
-  let styleComment = ''
-  if (node.parentId) {
-    // For nested elements, use relative positioning
-    const parent = allShapes.find(s => s.id === node.parentId)
-    if (parent && parent.position && parent.size) {
-      const relativeX = node.position.x - parent.position.x
-      const relativeY = node.position.y - parent.position.y
-      styleComment = `<!-- style="position: relative; left: ${relativeX}px; top: ${relativeY}px; width: ${node.size.width}px; height: ${node.size.height}px; background-color: ${hexToRgba(node.fillColor || '#ffffff', node.opacity || 1)}; border: ${node.borderWidth || 1}px ${node.borderStyle || 'solid'} ${node.borderColor || '#000000'};" -->`
-    }
-  } else {
-    // For root elements, use absolute positioning
-    styleComment = `<!-- style="position: absolute; left: ${node.position.x}px; top: ${node.position.y}px; width: ${node.size.width}px; height: ${node.size.height}px; background-color: ${hexToRgba(node.fillColor || '#ffffff', node.opacity || 1)}; border: ${node.borderWidth || 1}px ${node.borderStyle || 'solid'} ${node.borderColor || '#000000'};" -->`
-  }
-  
-  // Add style comment before the element if it exists
-  let html = ''
-  if (styleComment) {
-    html += `${indent}${styleComment}\n`
-  }
-  
-  html += `${indent}<${node.elementTag}${attributes}>\n`
+  let html = `${indent}<${node.elementTag}${attributes}>\n`
   
   // Add meaningful placeholder content based on element type
   const placeholderContent = getPlaceholderContent(node.elementTag, node.cssClasses, node.elementId)

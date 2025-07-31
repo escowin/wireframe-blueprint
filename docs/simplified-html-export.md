@@ -1,8 +1,8 @@
-# Simplified HTML Export Format
+# Ultra-Simplified HTML Export Format
 
 ## Overview
 
-The HTML export functionality has been enhanced to generate cleaner, more developer-friendly HTML output. Instead of including inline styles directly on elements, the export now moves all styling information to HTML comments while preserving the essential class and id attributes.
+The HTML export functionality has been enhanced to generate ultra-clean, developer-friendly HTML output. The export now generates minimal HTML structure containing only essential class and id attributes, with all styling information preserved in the saved JSON for reference when needed.
 
 ## Why This Change?
 
@@ -12,11 +12,12 @@ The HTML export functionality has been enhanced to generate cleaner, more develo
 - **Poor Separation of Concerns**: Mixing presentation with structure
 - **Difficult to Style**: Hard to apply consistent styling across multiple elements
 
-### Benefits of Simplified Output
-- **Clean HTML**: Elements contain only semantic attributes (class, id)
+### Benefits of Ultra-Simplified Output
+- **Ultra-Clean HTML**: Elements contain only semantic attributes (class, id)
+- **Minimal Output**: No style comments or inline styles cluttering the HTML
 - **CSS Ready**: Perfect foundation for external stylesheet implementation
 - **Developer Friendly**: Easy to read, understand, and modify
-- **Style Preservation**: All original styling information preserved in comments for reference
+- **Style Information**: Preserved in saved JSON for reference when needed
 - **Best Practices**: Follows modern web development standards
 
 ## Output Format
@@ -30,12 +31,10 @@ The HTML export functionality has been enhanced to generate cleaner, more develo
 </header>
 ```
 
-### After (Simplified Format)
+### After (Ultra-Simplified Format)
 ```html
-<!-- style="position: absolute; left: 50px; top: 25px; width: 800px; height: 100px; background-color: #e2e8f0; border: 2px solid #64748b;" -->
 <header class="main-header">
   <!-- header content -->
-  <!-- style="position: relative; left: 20px; top: 20px; width: 200px; height: 40px; background-color: #ffffff; border: 1px solid #e2e8f0;" -->
   <h1 class="title">
     <!-- h1 heading content -->
   </h1>
@@ -50,11 +49,11 @@ The HTML export functionality has been enhanced to generate cleaner, more develo
 - Semantic HTML structure preserved
 - Easy to read and understand
 
-### 2. **Style Information Preservation**
-- All original styling moved to HTML comments
-- Complete record of positioning, sizing, colors, and borders
-- Preserved for reference and documentation
-- Can be used to create external CSS
+### 2. **Minimal HTML Output**
+- No style comments or inline styles in HTML
+- Clean, focused output with only essential attributes
+- Semantic HTML structure preserved
+- Ready for immediate CSS implementation
 
 ### 3. **Nesting Support**
 - Hierarchical structure maintained
@@ -65,7 +64,6 @@ The HTML export functionality has been enhanced to generate cleaner, more develo
 ### 4. **Developer Workflow**
 ```html
 <!-- Generated HTML -->
-<!-- style="position: absolute; left: 50px; top: 25px; width: 800px; height: 100px; background-color: #e2e8f0; border: 2px solid #64748b;" -->
 <header class="main-header">
   <!-- header content -->
 </header>
@@ -86,29 +84,26 @@ The HTML export functionality has been enhanced to generate cleaner, more develo
 
 ## Implementation Details
 
-### Style Comment Format
+### HTML Output Format
 ```html
-<!-- style="position: [absolute|relative]; left: [X]px; top: [Y]px; width: [W]px; height: [H]px; background-color: [color]; border: [width]px [style] [color];" -->
+<elementTag class="cssClasses" id="elementId">
+  <!-- element content -->
+</elementTag>
 ```
 
-### Positioning Logic
-- **Root Elements**: Use absolute positioning with canvas coordinates
-- **Nested Elements**: Use relative positioning within their parent container
-- **Coordinates**: Calculated based on spatial containment detection
-
 ### Preserved Information
-- **Position**: Exact x, y coordinates
-- **Size**: Width and height dimensions
-- **Background**: Fill color with opacity
-- **Borders**: Width, style, and color
-- **Hierarchy**: Parent-child relationships
+- **Class Attributes**: CSS classes for styling
+- **ID Attributes**: Unique identifiers for elements
+- **Element Tags**: Semantic HTML structure
+- **Hierarchy**: Parent-child relationships maintained
+- **Style Information**: Preserved in saved JSON for reference
 
 ## Benefits for Development
 
 ### 1. **Immediate CSS Implementation**
 The exported HTML is ready for immediate CSS styling:
 ```css
-/* Copy styles from comments to CSS */
+/* Add your own CSS styling */
 .main-header {
   position: absolute;
   left: 50px;
@@ -155,8 +150,8 @@ Perfect for modern frameworks and build tools:
 ## Migration Path
 
 ### For Existing Projects
-1. **Export HTML**: Use the new simplified format
-2. **Extract Styles**: Copy styles from comments to CSS file
+1. **Export HTML**: Use the new ultra-simplified format
+2. **Reference JSON**: Use saved JSON for style information if needed
 3. **Apply Classes**: Use the preserved class names
 4. **Customize**: Modify styles as needed for your design system
 
@@ -168,10 +163,11 @@ Perfect for modern frameworks and build tools:
 
 ## Conclusion
 
-The simplified HTML export format provides the best of both worlds:
-- **Clean, semantic HTML** for modern development
-- **Complete style information** preserved for reference
-- **Developer-friendly output** that follows best practices
-- **Ready for production** with minimal additional work
+The ultra-simplified HTML export format provides the cleanest possible output:
+- **Ultra-clean, semantic HTML** for modern development
+- **Minimal output** with no unnecessary style information
+- **Developer-friendly structure** that follows best practices
+- **Ready for production** with immediate CSS implementation
+- **Style information preserved** in saved JSON for reference when needed
 
-This approach bridges the gap between visual design and code implementation, making the diagram tool an effective part of the development workflow. 
+This approach provides the cleanest possible HTML foundation while maintaining all design information in the saved project files. 
