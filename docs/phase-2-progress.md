@@ -85,6 +85,63 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 - **Logic**: Shows first CSS class when enabled, falls back to element tag only
 - **State**: Persists with canvas state and auto-save functionality
 
+#### 5. Nested JSON Structure - ✅ **IMPLEMENTED**
+- **Feature**: Save diagrams with hierarchical structure that mirrors HTML nesting
+- **Implementation**: Enhanced save/load functions in `utils/helpers.ts`
+- **Benefits**: Much easier to understand layout structure at a glance
+- **Backward Compatibility**: Supports both old flat structure (v1.0) and new nested structure (v1.1)
+- **Auto-Save**: Uses nested structure for better localStorage readability
+
+**Key Features**:
+- **Hierarchical Organization**: Shapes are nested based on spatial containment relationships
+- **Visual Clarity**: JSON structure directly reflects the HTML DOM hierarchy
+- **Developer Friendly**: Easy to understand parent-child relationships in saved files
+- **Version Management**: Automatic detection and conversion between structure formats
+
+**Example Nested JSON Structure**:
+```json
+{
+  "version": "1.1",
+  "timestamp": "2024-12-XX...",
+  "canvasState": {
+    "shapes": [
+      {
+        "id": "header-1",
+        "type": "rectangle",
+        "elementTag": "header",
+        "cssClasses": "main-header",
+        "children": [
+          {
+            "id": "h1-1",
+            "type": "rectangle",
+            "elementTag": "h1",
+            "cssClasses": "title"
+          },
+          {
+            "id": "nav-1",
+            "type": "rectangle",
+            "elementTag": "nav",
+            "children": [
+              {
+                "id": "nav-item-1",
+                "type": "rectangle",
+                "elementTag": "div",
+                "cssClasses": "nav-item"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Comparison**:
+- **Old Flat Structure**: All shapes in a single array, hard to understand relationships
+- **New Nested Structure**: Hierarchical organization that mirrors HTML structure
+- **Benefits**: Immediate visual understanding of layout hierarchy and element relationships
+
 ### ❌ **Features Skipped (As Requested)**
 
 #### 1. Advanced Shapes - ❌ **SKIPPED**
@@ -115,6 +172,11 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 - Fixed console error in nesting detection algorithm
 - Added robust error handling and input validation
 - Enhanced `exportAsHTML()` function
+- **NEW**: Added `convertToNestedStructure()` function for JSON organization
+- **NEW**: Added `convertFromNestedStructure()` function for backward compatibility
+- **UPDATED**: `saveDiagram()` function to use nested structure
+- **UPDATED**: `loadDiagram()` function with version detection and conversion
+- **UPDATED**: `autoSave()` and `loadAutoSave()` functions for nested structure
 
 #### 2. **`src/components/Toolbar.tsx`**
 - Added HTML export button
@@ -146,6 +208,11 @@ This document tracks the implementation progress for Phase 2: Enhanced Drawing &
 - Updated shape label rendering to support CSS class display
 - Added conditional logic for showing CSS classes in shorthand format
 
+#### 8. **`src/utils/test-nested-json.js`** - **NEW**
+- Test file demonstrating nested JSON structure conversion
+- Example data showing header with nested navigation elements
+- Validation of hierarchical organization benefits
+
 ### Code Examples
 
 #### Enhanced HTML Export Function
@@ -168,6 +235,113 @@ export const generateHTML = (shapes: any[]): string => {
   html += '</body>\n</html>'
   
   return html
+}
+```
+
+#### NEW: Nested JSON Structure Conversion
+```typescript
+export const convertToNestedStructure = (shapes: any[]): any => {
+  // First, detect parent-child relationships based on spatial containment
+  const shapesWithParents = detectNesting(shapes)
+  
+  // Build a tree structure
+  const shapeTree = buildShapeTree(shapesWithParents)
+  
+  // Convert tree to nested object structure
+  const convertNodeToNested = (node: any): any => {
+    const nestedShape = {
+      id: node.id,
+      type: node.type,
+      position: node.position,
+      size: node.size,
+      elementTag: node.elementTag,
+      cssClasses: node.cssClasses,
+      elementId: node.elementId,
+      fillColor: node.fillColor,
+      borderColor: node.borderColor,
+      borderWidth: node.borderWidth,
+      borderStyle: node.borderStyle,
+      opacity: node.opacity,
+      zIndex: node.zIndex
+    }
+    
+    // Add children if they exist
+    if (node.children && node.children.length > 0) {
+      nestedShape.children = node.children.map((child: any) => convertNodeToNested(child))
+    }
+    
+    return nestedShape
+  }
+  
+  return shapeTree.map(node => convertNodeToNested(node))
+}
+```
+
+#### Enhanced Save Function with Nested Structure
+```typescript
+export const saveDiagram = (canvasState: any): void => {
+  // Convert shapes to nested structure for better readability
+  const nestedShapes = convertToNestedStructure(canvasState.shapes)
+  
+  const diagramData = {
+    version: '1.1', // Updated version to indicate nested structure
+    timestamp: new Date().toISOString(),
+    canvasState: {
+      ...canvasState,
+      shapes: nestedShapes // Use nested structure instead of flat array
+    }
+  }
+  
+  const jsonString = JSON.stringify(diagramData, null, 2)
+  const blob = new Blob([jsonString], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  
+  const link = document.createElement('a')
+  link.download = `diagram-${new Date().toISOString().split('T')[0]}.json`
+  link.href = url
+  link.click()
+  
+  URL.revokeObjectURL(url)
+}
+```
+
+#### Backward Compatible Load Function
+```typescript
+export const loadDiagram = (file: File): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string
+        const diagramData = JSON.parse(content)
+        
+        // Validate the file format
+        if (!diagramData.version || !diagramData.canvasState) {
+          throw new Error('Invalid diagram file format')
+        }
+        
+        const canvasState = diagramData.canvasState
+        
+        // Handle both old flat structure and new nested structure
+        if (diagramData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
+          // New nested structure - convert back to flat for canvas rendering
+          canvasState.shapes = convertFromNestedStructure(canvasState.shapes)
+        }
+        // Old flat structure (version 1.0) - use as is
+        
+        resolve(canvasState)
+      } catch (error) {
+        reject(new Error('Failed to parse diagram file'))
+      }
+    }
+    
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'))
+    }
+    
+    reader.readAsText(file)
+  })
 }
 ```
 
@@ -262,6 +436,7 @@ export interface Shape {
 - **Export Options**: Both PNG and HTML export available
 - **UI Improvements**: Better button styling and user experience
 - **Bug Fixes**: All known issues resolved
+- **Nested JSON Structure**: Hierarchical organization for better readability and understanding
 
 ### 🎯 **Ready for Phase 3**
 The application now has a solid foundation for layout planning with:
@@ -270,6 +445,7 @@ The application now has a solid foundation for layout planning with:
 - **Design Cues**: Border styles for indicating element purposes
 - **Export Flexibility**: Both visual and code exports
 - **Robust Error Handling**: Graceful handling of edge cases
+- **Organized Data**: Nested JSON structure that mirrors HTML hierarchy
 
 ## Next Steps
 
@@ -291,4 +467,4 @@ The application now has a solid foundation for layout planning with:
 **Date**: December 2024  
 **Status**: ✅ Phase 2 Complete  
 **Progress**: 100% of revised Phase 2 goals  
-**Quality**: Production-ready implementation with comprehensive error handling 
+**Quality**: Production-ready implementation with comprehensive error handling and organized data structure 

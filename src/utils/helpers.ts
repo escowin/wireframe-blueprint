@@ -304,12 +304,91 @@ export const hexToRgba = (hex: string, opacity: number): string => {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
-// Save diagram as JSON file
+// Convert flat shapes array to nested structure for better readability
+export const convertToNestedStructure = (shapes: any[]): any => {
+  // First, detect parent-child relationships based on spatial containment
+  const shapesWithParents = detectNesting(shapes)
+  
+  // Build a tree structure
+  const shapeTree = buildShapeTree(shapesWithParents)
+  
+  // Convert tree to nested object structure
+  const convertNodeToNested = (node: any): any => {
+    const nestedShape = {
+      id: node.id,
+      type: node.type,
+      position: node.position,
+      size: node.size,
+      elementTag: node.elementTag,
+      cssClasses: node.cssClasses,
+      elementId: node.elementId,
+      fillColor: node.fillColor,
+      borderColor: node.borderColor,
+      borderWidth: node.borderWidth,
+      borderStyle: node.borderStyle,
+      opacity: node.opacity,
+      zIndex: node.zIndex
+    }
+    
+    // Add children if they exist
+    if (node.children && node.children.length > 0) {
+      nestedShape.children = node.children.map((child: any) => convertNodeToNested(child))
+    }
+    
+    return nestedShape
+  }
+  
+  return shapeTree.map(node => convertNodeToNested(node))
+}
+
+// Convert nested structure back to flat array for canvas rendering
+export const convertFromNestedStructure = (nestedShapes: any[]): any[] => {
+  const flatShapes: any[] = []
+  
+  const flattenNode = (node: any, parentId?: string) => {
+    const flatShape = {
+      id: node.id,
+      type: node.type,
+      position: node.position,
+      size: node.size,
+      elementTag: node.elementTag,
+      cssClasses: node.cssClasses,
+      elementId: node.elementId,
+      fillColor: node.fillColor,
+      borderColor: node.borderColor,
+      borderWidth: node.borderWidth,
+      borderStyle: node.borderStyle,
+      opacity: node.opacity,
+      zIndex: node.zIndex,
+      parentId: parentId || null
+    }
+    
+    flatShapes.push(flatShape)
+    
+    // Process children
+    if (node.children && node.children.length > 0) {
+      node.children.forEach((child: any) => {
+        flattenNode(child, node.id)
+      })
+    }
+  }
+  
+  nestedShapes.forEach(node => flattenNode(node))
+  return flatShapes
+}
+
+// Save diagram as JSON file with nested structure
 export const saveDiagram = (canvasState: any): void => {
+  // Convert shapes to nested structure for better readability
+  const nestedShapes = convertToNestedStructure(canvasState.shapes)
+  
   const diagramData = {
-    version: '1.0',
+    version: '1.1', // Updated version to indicate nested structure
     timestamp: new Date().toISOString(),
-    canvasState: canvasState
+    canvasState: {
+      ...canvasState,
+      shapes: nestedShapes // Use nested structure instead of flat array
+    }
   }
   
   const jsonString = JSON.stringify(diagramData, null, 2)
@@ -324,7 +403,7 @@ export const saveDiagram = (canvasState: any): void => {
   URL.revokeObjectURL(url)
 }
 
-// Load diagram from JSON file
+// Load diagram from JSON file with support for both flat and nested structures
 export const loadDiagram = (file: File): Promise<any> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -339,7 +418,16 @@ export const loadDiagram = (file: File): Promise<any> => {
           throw new Error('Invalid diagram file format')
         }
         
-        resolve(diagramData.canvasState)
+        const canvasState = diagramData.canvasState
+        
+        // Handle both old flat structure and new nested structure
+        if (diagramData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
+          // New nested structure - convert back to flat for canvas rendering
+          canvasState.shapes = convertFromNestedStructure(canvasState.shapes)
+        }
+        // Old flat structure (version 1.0) - use as is
+        
+        resolve(canvasState)
       } catch (error) {
         reject(new Error('Failed to parse diagram file'))
       }
@@ -353,13 +441,19 @@ export const loadDiagram = (file: File): Promise<any> => {
   })
 }
 
-// Auto-save to localStorage
+// Auto-save to localStorage with nested structure
 export const autoSave = (canvasState: any): void => {
   try {
+    // Convert shapes to nested structure for better readability
+    const nestedShapes = convertToNestedStructure(canvasState.shapes)
+    
     const autoSaveData = {
-      version: '1.0',
+      version: '1.1', // Updated version to indicate nested structure
       timestamp: new Date().toISOString(),
-      canvasState: canvasState
+      canvasState: {
+        ...canvasState,
+        shapes: nestedShapes // Use nested structure instead of flat array
+      }
     }
     localStorage.setItem('diagram-autosave', JSON.stringify(autoSaveData))
   } catch (error) {
@@ -367,7 +461,7 @@ export const autoSave = (canvasState: any): void => {
   }
 }
 
-// Load auto-saved diagram from localStorage
+// Load auto-saved diagram from localStorage with support for both structures
 export const loadAutoSave = (): any | null => {
   try {
     const saved = localStorage.getItem('diagram-autosave')
@@ -378,7 +472,16 @@ export const loadAutoSave = (): any | null => {
       return null
     }
     
-    return autoSaveData.canvasState
+    const canvasState = autoSaveData.canvasState
+    
+    // Handle both old flat structure and new nested structure
+    if (autoSaveData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
+      // New nested structure - convert back to flat for canvas rendering
+      canvasState.shapes = convertFromNestedStructure(canvasState.shapes)
+    }
+    // Old flat structure (version 1.0) - use as is
+    
+    return canvasState
   } catch (error) {
     console.warn('Failed to load auto-saved diagram:', error)
     return null
