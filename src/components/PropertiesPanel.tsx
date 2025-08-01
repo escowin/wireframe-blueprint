@@ -1,6 +1,6 @@
 import React from 'react'
 import { Shape } from '../types'
-import { hexToRgba, getLayerInfo, bringToFront, sendToBack, bringForward, sendBackward } from '../utils/helpers'
+import { hexToRgba, getLayerInfo, bringToFront, sendToBack, bringForward, sendBackward, getChildren, getAncestors, applyNesting } from '../utils/helpers'
 import './PropertiesPanel.scss'
 
 interface PropertiesPanelProps {
@@ -672,6 +672,94 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               onChange={(e) => handlePropertyChange('zIndex', parseInt(e.target.value) || 0)}
               title="Direct z-index control"
             />
+          </div>
+        </div>
+
+        {/* Nesting Information Section */}
+        <div className="property-group">
+          <label className="property-label">Nesting Information</label>
+          
+          {/* Parent Information */}
+          <div className="nesting-info">
+            <div className="nesting-parent">
+              <span className="nesting-label">Parent:</span>
+              <span className="nesting-value">
+                {selectedShape.parentId ? (
+                  <span className="has-parent">
+                    {canvasState?.shapes.find(s => s.id === selectedShape.parentId)?.elementTag || 'Unknown'} 
+                    {canvasState?.shapes.find(s => s.id === selectedShape.parentId)?.elementId && 
+                      `#${canvasState.shapes.find(s => s.id === selectedShape.parentId)?.elementId}`
+                    }
+                  </span>
+                ) : (
+                  <span className="no-parent">None (Root Level)</span>
+                )}
+              </span>
+            </div>
+            
+            {/* Children Information */}
+            <div className="nesting-children">
+              <span className="nesting-label">Children:</span>
+              <span className="nesting-value">
+                {(() => {
+                  const children = canvasState?.shapes.filter(s => s.parentId === selectedShape.id) || []
+                  return children.length > 0 ? (
+                    <span className="has-children">
+                      {children.length} element{children.length !== 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    <span className="no-children">None</span>
+                  )
+                })()}
+              </span>
+            </div>
+          </div>
+          
+          {/* Nesting Controls */}
+          <div className="nesting-controls">
+            <div className="nesting-row">
+              <button
+                className="nesting-btn nesting-btn-remove"
+                onClick={() => {
+                  if (onShapesUpdate && selectedShape.parentId) {
+                    const updatedShapes = applyNesting(canvasState.shapes, selectedShape.id, null)
+                    onShapesUpdate(updatedShapes)
+                  }
+                }}
+                disabled={!selectedShape.parentId}
+                title="Remove from parent"
+              >
+                Remove from Parent
+              </button>
+            </div>
+            
+            {/* Parent Selection */}
+            <div className="parent-selection">
+              <label className="parent-label">Set Parent:</label>
+              <select
+                className="select parent-select"
+                value={selectedShape.parentId || ''}
+                onChange={(e) => {
+                  if (onShapesUpdate) {
+                    const newParentId = e.target.value || null
+                    const updatedShapes = applyNesting(canvasState.shapes, selectedShape.id, newParentId)
+                    onShapesUpdate(updatedShapes)
+                  }
+                }}
+              >
+                <option value="">No Parent (Root Level)</option>
+                {canvasState?.shapes
+                  .filter(s => s.id !== selectedShape.id)
+                  .map(shape => (
+                    <option key={shape.id} value={shape.id}>
+                      {shape.elementTag}
+                      {shape.elementId && `#${shape.elementId}`}
+                      {shape.cssClasses && ` ${shape.cssClasses.split(' ').map(cls => `.${cls}`).join('')}`}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
           </div>
         </div>
       </div>

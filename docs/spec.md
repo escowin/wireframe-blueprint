@@ -185,7 +185,7 @@ Example HTML export:
 - **Typography**: Font family, size, weight, color, alignment options ✅
 
 ### Phase 3: Layout & Hierarchy (Weeks 5-6) 🔄 **IN PROGRESS**
-- **Nesting System**: Drag and drop shapes inside other shapes (partially implemented)
+- **Nesting System**: Drag and drop shapes inside other shapes ✅ **COMPLETED**
 - **Layering**: Z-index management and layer panel ✅ **COMPLETED IN PHASE 2**
 - **Alignment Tools**: Snap to grid, snap to edges, distribution tools
 - **Grouping**: Group/ungroup multiple elements

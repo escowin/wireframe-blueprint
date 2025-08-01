@@ -444,3 +444,120 @@
     }
   }
 } 
+
+// Nesting Information Styles
+.nesting-info {
+  margin-bottom: 12px;
+  
+  .nesting-parent,
+  .nesting-children {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    background-color: #f8fafc;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    
+    .nesting-label {
+      font-weight: 500;
+      color: #475569;
+      font-size: 12px;
+    }
+    
+    .nesting-value {
+      font-size: 12px;
+      
+      .has-parent {
+        color: #059669;
+        font-weight: 500;
+      }
+      
+      .no-parent {
+        color: #6b7280;
+        font-style: italic;
+      }
+      
+      .has-children {
+        color: #3b82f6;
+        font-weight: 500;
+      }
+      
+      .no-children {
+        color: #6b7280;
+        font-style: italic;
+      }
+    }
+  }
+}
+
+.nesting-controls {
+  .nesting-row {
+    margin-bottom: 12px;
+    
+    .nesting-btn {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background-color: #ffffff;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover:not(:disabled) {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      &.nesting-btn-remove {
+        color: #dc2626;
+        border-color: #fecaca;
+        background-color: #fef2f2;
+        
+        &:hover:not(:disabled) {
+          background-color: #fee2e2;
+          border-color: #fca5a5;
+        }
+      }
+    }
+  }
+  
+  .parent-selection {
+    .parent-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    
+    .parent-select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background-color: #ffffff;
+      font-size: 12px;
+      color: #374151;
+      
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
+      
+      option {
+        padding: 4px;
+      }
+    }
+  }
+} 

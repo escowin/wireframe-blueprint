@@ -646,3 +646,190 @@ export const getLayerInfo = (shapes: any[], shapeId: string): { currentLayer: nu
   
   return { currentLayer, totalLayers, layerPosition }
 } 
+
+// Enhanced nesting detection with visual feedback
+export const findDropTarget = (shapes: Shape[], draggedShape: Shape, dropPoint: Point): {
+  parentId: string | null
+  isValid: boolean
+  confidence: number
+  previewPosition: Point
+} => {
+  // Filter out the dragged shape and invalid shapes
+  const potentialParents = shapes.filter(shape => 
+    shape.id !== draggedShape.id &&
+    shape && 
+    shape.position && 
+    shape.size && 
+    typeof shape.position.x === 'number' && 
+    typeof shape.position.y === 'number' &&
+    typeof shape.size.width === 'number' && 
+    typeof shape.size.height === 'number'
+  )
+
+  let bestTarget = {
+    parentId: null as string | null,
+    isValid: false,
+    confidence: 0,
+    previewPosition: dropPoint
+  }
+
+  potentialParents.forEach(parent => {
+    const parentLeft = parent.position.x
+    const parentTop = parent.position.y
+    const parentRight = parentLeft + parent.size.width
+    const parentBottom = parentTop + parent.size.height
+
+    // Check if drop point is within parent bounds
+    const isWithinBounds = dropPoint.x >= parentLeft && 
+                          dropPoint.x <= parentRight && 
+                          dropPoint.y >= parentTop && 
+                          dropPoint.y <= parentBottom
+
+    if (isWithinBounds) {
+      // Calculate how well the dragged shape would fit
+      const draggedShapeArea = draggedShape.size.width * draggedShape.size.height
+      const parentArea = parent.size.width * parent.size.height
+      
+      // Calculate overlap if we place the shape at the drop point
+      const overlapLeft = Math.max(parentLeft, dropPoint.x)
+      const overlapTop = Math.max(parentTop, dropPoint.y)
+      const overlapRight = Math.min(parentRight, dropPoint.x + draggedShape.size.width)
+      const overlapBottom = Math.min(parentBottom, dropPoint.y + draggedShape.size.height)
+      
+      if (overlapRight > overlapLeft && overlapBottom > overlapTop) {
+        const overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop)
+        const overlapPercentage = overlapArea / draggedShapeArea
+        
+        // Calculate confidence based on overlap and size ratio
+        const sizeRatio = Math.min(draggedShapeArea / parentArea, parentArea / draggedShapeArea)
+        const confidence = overlapPercentage * sizeRatio
+        
+        if (confidence > bestTarget.confidence) {
+          // Validate that this nesting would be valid
+          const isValid = validateNesting(shapes, parent.id, draggedShape.id)
+          
+          bestTarget = {
+            parentId: parent.id,
+            isValid,
+            confidence,
+            previewPosition: {
+              x: Math.max(parentLeft, Math.min(parentRight - draggedShape.size.width, dropPoint.x)),
+              y: Math.max(parentTop, Math.min(parentBottom - draggedShape.size.height, dropPoint.y))
+            }
+          }
+        }
+      }
+    }
+  })
+
+  return bestTarget
+}
+
+// Real-time nesting validation
+export const validateNesting = (shapes: Shape[], parentId: string, childId: string): boolean => {
+  // Prevent self-nesting
+  if (parentId === childId) return false
+  
+  // Check for circular references
+  const checkCircularReference = (currentParentId: string, targetChildId: string): boolean => {
+    if (currentParentId === targetChildId) return true
+    
+    const currentParent = shapes.find(s => s.id === currentParentId)
+    if (!currentParent || !currentParent.parentId) return false
+    
+    return checkCircularReference(currentParent.parentId, targetChildId)
+  }
+  
+  if (checkCircularReference(parentId, childId)) return false
+  
+  // Additional validation rules can be added here
+  // For example, preventing nesting of certain shape types
+  
+  return true
+}
+
+// Get nesting indicators for visual display
+export const getNestingIndicators = (shapes: Shape[]): Array<{
+  parentId: string
+  childIds: string[]
+  level: number
+}> => {
+  const indicators: Array<{
+    parentId: string
+    childIds: string[]
+    level: number
+  }> = []
+  
+  const shapeMap = new Map<string, Shape>()
+  shapes.forEach(shape => shapeMap.set(shape.id, shape))
+  
+  // Find all parent-child relationships
+  shapes.forEach(shape => {
+    if (shape.parentId) {
+      const parent = shapeMap.get(shape.parentId)
+      if (parent) {
+        // Calculate nesting level
+        let level = 0
+        let currentParent = parent
+        while (currentParent.parentId) {
+          level++
+          currentParent = shapeMap.get(currentParent.parentId)!
+          if (!currentParent) break
+        }
+        
+        // Add to indicators
+        const existingIndicator = indicators.find(ind => ind.parentId === shape.parentId)
+        if (existingIndicator) {
+          existingIndicator.childIds.push(shape.id)
+        } else {
+          indicators.push({
+            parentId: shape.parentId,
+            childIds: [shape.id],
+            level
+          })
+        }
+      }
+    }
+  })
+  
+  return indicators
+}
+
+// Apply nesting relationship to shapes
+export const applyNesting = (shapes: Shape[], childId: string, parentId: string | null): Shape[] => {
+  return shapes.map(shape => 
+    shape.id === childId 
+      ? { ...shape, parentId }
+      : shape
+  )
+}
+
+// Get all children of a shape (recursive)
+export const getChildren = (shapes: Shape[], parentId: string): Shape[] => {
+  const directChildren = shapes.filter(shape => shape.parentId === parentId)
+  const allChildren = [...directChildren]
+  
+  directChildren.forEach(child => {
+    allChildren.push(...getChildren(shapes, child.id))
+  })
+  
+  return allChildren
+}
+
+// Get all ancestors of a shape
+export const getAncestors = (shapes: Shape[], shapeId: string): Shape[] => {
+  const ancestors: Shape[] = []
+  let currentShape = shapes.find(s => s.id === shapeId)
+  
+  while (currentShape && currentShape.parentId) {
+    const parent = shapes.find(s => s.id === currentShape.parentId)
+    if (parent) {
+      ancestors.unshift(parent)
+      currentShape = parent
+    } else {
+      break
+    }
+  }
+  
+  return ancestors
+} 

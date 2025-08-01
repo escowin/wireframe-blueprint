@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { CanvasState, Shape, Point, ToolType } from '../types'
-import { generateId, hexToRgba } from '../utils/helpers'
+import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators } from '../utils/helpers'
 import './Canvas.scss'
 
 interface CanvasProps {
@@ -20,6 +20,14 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   const [dragStart, setDragStart] = useState<Point | null>(null)
   const [resizeStart, setResizeStart] = useState<{ point: Point; shape: Shape } | null>(null)
   const [resizeHandle, setResizeHandle] = useState<string>('') // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
+
+  // New state for nesting system
+  const [dragTarget, setDragTarget] = useState<string | null>(null)
+  const [nestingPreview, setNestingPreview] = useState<{
+    parentId: string | null
+    isValid: boolean
+    previewPosition: Point
+  } | null>(null)
 
   useImperativeHandle(ref, () => canvasRef.current!)
 
@@ -249,16 +257,37 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       }))
     }
     
-    // Handle dragging
+    // Handle dragging with nesting detection
     if (isDragging && dragStart && canvasState.selectedShapeId) {
+      const draggedShape = canvasState.shapes.find(s => s.id === canvasState.selectedShapeId)
+      if (!draggedShape) return
+      
       const deltaX = canvasPoint.x - dragStart.x
       const deltaY = canvasPoint.y - dragStart.y
+      const newPosition = { 
+        x: draggedShape.position.x + deltaX, 
+        y: draggedShape.position.y + deltaY 
+      }
       
+      // Find potential drop target for nesting
+      const dropTarget = findDropTarget(canvasState.shapes, draggedShape, newPosition)
+      
+      // Update nesting preview
+      setNestingPreview(dropTarget.confidence > 0.3 ? {
+        parentId: dropTarget.parentId,
+        isValid: dropTarget.isValid,
+        previewPosition: dropTarget.previewPosition
+      } : null)
+      
+      // Update drag target for visual feedback
+      setDragTarget(dropTarget.confidence > 0.3 ? dropTarget.parentId : null)
+      
+      // Update shape position
       setCanvasState(prev => ({
         ...prev,
         shapes: prev.shapes.map(shape => 
           shape.id === prev.selectedShapeId 
-            ? { ...shape, position: { x: shape.position.x + deltaX, y: shape.position.y + deltaY } }
+            ? { ...shape, position: newPosition }
             : shape
         )
       }))
@@ -362,7 +391,13 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       })
     }
 
-
+    // Apply nesting if we have a valid nesting preview
+    if (isDragging && nestingPreview && nestingPreview.isValid && canvasState.selectedShapeId) {
+      setCanvasState(prev => ({
+        ...prev,
+        shapes: applyNesting(prev.shapes, canvasState.selectedShapeId!, nestingPreview.parentId)
+      }))
+    }
 
     // Reset all states
     setIsDrawing(false)
@@ -372,10 +407,12 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     setDragStart(null)
     setResizeStart(null)
     setResizeHandle('')
+    setDragTarget(null)
+    setNestingPreview(null)
     
     // Restore text selection when drawing stops
     document.body.style.userSelect = ''
-  }, [isDrawing, drawStart, isDragging, isResizing, resizeHandle, setCanvasState])
+  }, [isDrawing, drawStart, isDragging, isResizing, resizeHandle, nestingPreview, canvasState.selectedShapeId, setCanvasState])
 
   // Handle zoom with mouse wheel
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -470,11 +507,15 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       }
 
       const isSelected = shape.id === canvasState.selectedShapeId
+      
+      // Check if shape has children or is a child
+      const hasChildren = canvasState.shapes.some(s => s.parentId === shape.id)
+      const isChild = shape.parentId !== undefined && shape.parentId !== null
 
       return (
         <React.Fragment key={shape.id}>
           <div
-            className={`canvas-shape ${shape.type} ${isSelected ? 'selected' : ''}`}
+            className={`canvas-shape ${shape.type} ${isSelected ? 'selected' : ''} ${hasChildren ? 'has-children' : ''} ${isChild ? 'is-child' : ''}`}
             style={{
               position: 'absolute',
               left: screenPos.x,
@@ -648,8 +689,113 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     })
   }
 
+  // Render drop zone highlighting for nesting
+  const renderDropZoneHighlight = () => {
+    if (!dragTarget || !nestingPreview) return null
+    
+    const targetShape = canvasState.shapes.find(s => s.id === dragTarget)
+    if (!targetShape) return null
+    
+    const screenPos = canvasToScreen(targetShape.position)
+    const screenSize = {
+      width: targetShape.size.width * canvasState.zoom,
+      height: targetShape.size.height * canvasState.zoom
+    }
+    
+    return (
+      <div
+        className={`drop-zone-highlight ${nestingPreview.isValid ? 'valid' : 'invalid'}`}
+        style={{
+          position: 'absolute',
+          left: screenPos.x - 4,
+          top: screenPos.y - 4,
+          width: screenSize.width + 8,
+          height: screenSize.height + 8,
+          border: `3px ${nestingPreview.isValid ? 'dashed #4ade80' : 'dashed #f87171'}`,
+          borderRadius: targetShape.type === 'circle' ? '50%' : '4px',
+          backgroundColor: nestingPreview.isValid ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
+          pointerEvents: 'none',
+          zIndex: 1000
+        }}
+      />
+    )
+  }
 
-  
+  // Render nesting indicators
+  const renderNestingIndicators = () => {
+    const indicators = getNestingIndicators(canvasState.shapes)
+    
+    return indicators.map(indicator => {
+      const parentShape = canvasState.shapes.find(s => s.id === indicator.parentId)
+      if (!parentShape) return null
+      
+      const screenPos = canvasToScreen(parentShape.position)
+      const screenSize = {
+        width: parentShape.size.width * canvasState.zoom,
+        height: parentShape.size.height * canvasState.zoom
+      }
+      
+      return (
+        <div
+          key={`nesting-${indicator.parentId}`}
+          className="nesting-indicator"
+          style={{
+            position: 'absolute',
+            left: screenPos.x + screenSize.width - 20,
+            top: screenPos.y - 10,
+            width: 20,
+            height: 20,
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            pointerEvents: 'none',
+            zIndex: 999
+          }}
+          title={`Contains ${indicator.childIds.length} child element${indicator.childIds.length !== 1 ? 's' : ''}`}
+        >
+          {indicator.childIds.length}
+        </div>
+      )
+    })
+  }
+
+  // Render nesting preview
+  const renderNestingPreview = () => {
+    if (!nestingPreview || !canvasState.selectedShapeId) return null
+    
+    const selectedShape = canvasState.shapes.find(s => s.id === canvasState.selectedShapeId)
+    if (!selectedShape) return null
+    
+    const screenPos = canvasToScreen(nestingPreview.previewPosition)
+    const screenSize = {
+      width: selectedShape.size.width * canvasState.zoom,
+      height: selectedShape.size.height * canvasState.zoom
+    }
+    
+    return (
+      <div
+        className={`nesting-preview ${nestingPreview.isValid ? 'valid' : 'invalid'}`}
+        style={{
+          position: 'absolute',
+          left: screenPos.x,
+          top: screenPos.y,
+          width: screenSize.width,
+          height: screenSize.height,
+          border: `2px ${nestingPreview.isValid ? 'solid #4ade80' : 'solid #f87171'}`,
+          borderRadius: selectedShape.type === 'circle' ? '50%' : `${selectedShape.borderRadius * canvasState.zoom}px`,
+          backgroundColor: nestingPreview.isValid ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)',
+          pointerEvents: 'none',
+          zIndex: 1001
+        }}
+      />
+    )
+  }
+
   return (
     <div 
       className="canvas-container" 
@@ -689,6 +835,9 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           
           {renderGrid()}
           {renderShapes()}
+          {renderDropZoneHighlight()}
+          {renderNestingIndicators()}
+          {renderNestingPreview()}
         </div>
       </div>
     )

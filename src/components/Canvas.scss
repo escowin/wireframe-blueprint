@@ -89,3 +89,120 @@
   &.resize-handle-w { cursor: w-resize; }
   &.resize-handle-e { cursor: e-resize; }
 } 
+
+// Nesting System Styles
+.drop-zone-highlight {
+  transition: all 0.2s ease-in-out;
+  
+  &.valid {
+    animation: pulse-valid 1.5s infinite;
+  }
+  
+  &.invalid {
+    animation: pulse-invalid 1.5s infinite;
+  }
+}
+
+.nesting-indicator {
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.nesting-preview {
+  transition: all 0.2s ease-in-out;
+  
+  &.valid {
+    animation: preview-valid 0.8s ease-in-out;
+  }
+  
+  &.invalid {
+    animation: preview-invalid 0.8s ease-in-out;
+  }
+}
+
+// Animations for nesting feedback
+@keyframes pulse-valid {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes pulse-invalid {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes preview-valid {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes preview-invalid {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Enhanced shape styles for nesting
+.canvas-shape {
+  &.has-children {
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border: 2px solid #3b82f6;
+      border-radius: inherit;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+  }
+  
+  &.is-child {
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      opacity: 0.8;
+      pointer-events: none;
+    }
+  }
+} 
