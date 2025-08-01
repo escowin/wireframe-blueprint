@@ -1,5 +1,5 @@
 import React from 'react'
-import { ToolType, Shape, AlignmentAction, CanvasState } from '../types'
+import { ToolType, Shape, AlignmentAction, CanvasState, GroupAction } from '../types'
 import './Toolbar.scss'
 
 interface ToolbarProps {
@@ -15,6 +15,7 @@ interface ToolbarProps {
   onLayerAction?: (action: 'front' | 'back' | 'forward' | 'backward') => void
   selectedShapeIds?: string[]
   onAlignmentAction?: (action: AlignmentAction) => void
+  onGroupAction?: (action: GroupAction) => void
   canvasState?: CanvasState
   onCanvasUpdate?: (updates: any) => void
 }
@@ -32,6 +33,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onLayerAction,
   selectedShapeIds = [],
   onAlignmentAction,
+  onGroupAction,
   canvasState,
   onCanvasUpdate
 }) => {
@@ -184,6 +186,33 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   ⇳
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grouping Tools Section */}
+      {selectedShapeIds.length > 0 && (
+        <div className="toolbar-section">
+          <h3 className="toolbar-title">Grouping</h3>
+          <div className="toolbar-actions">
+            <div className="grouping-buttons">
+              <button
+                className="btn btn--primary grouping-btn"
+                onClick={() => onGroupAction?.('group')}
+                title="Group Selected Shapes"
+                disabled={selectedShapeIds.length < 2 || !onGroupAction}
+              >
+                📦 Group
+              </button>
+              <button
+                className="btn btn--secondary grouping-btn"
+                onClick={() => onGroupAction?.('ungroup')}
+                title="Ungroup Selected Shapes"
+                disabled={selectedShapeIds.length === 0 || !onGroupAction}
+              >
+                📦❌ Ungroup
+              </button>
             </div>
           </div>
         </div>

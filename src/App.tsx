@@ -2,15 +2,18 @@ import { useState, useRef, useEffect } from 'react'
 import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
-import { CanvasState, Shape, ToolType, AlignmentAction } from './types'
-import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes } from './utils/helpers'
+import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction } from './types'
+import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds } from './utils/helpers'
 import './App.scss'
 
 function App() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [canvasState, setCanvasState] = useState<CanvasState>({
     shapes: [],
+    groups: [],
     selectedShapeId: null,
+    selectedShapeIds: [],
+    selectedGroupId: null,
     zoom: 1,
     pan: { x: 0, y: 0 },
     gridSize: 20,
@@ -25,7 +28,6 @@ function App() {
   })
   const [currentTool, setCurrentTool] = useState<ToolType>('select')
   const [storageUsage, setStorageUsage] = useState<{ used: number; total: number; available: number; percentage: number } | null>(null)
-  const [selectedShapeIds, setSelectedShapeIds] = useState<string[]>([])
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -71,6 +73,9 @@ function App() {
   const migrateCanvasState = (canvasState: any): CanvasState => {
     return {
       ...canvasState,
+      groups: canvasState.groups ?? [],
+      selectedShapeIds: canvasState.selectedShapeIds ?? [],
+      selectedGroupId: canvasState.selectedGroupId ?? null,
       snapToGrid: canvasState.snapToGrid ?? true,
       snapToEdges: canvasState.snapToEdges ?? true,
       gridSnapSize: canvasState.gridSnapSize ?? 20,
@@ -78,6 +83,7 @@ function App() {
         ...shape,
         elementId: shape.elementId || '', // Add elementId if missing
         cssClasses: shape.cssClasses || '', // Ensure cssClasses is defined
+        groupId: shape.groupId || undefined, // Add groupId if missing
         borderRadius: shape.borderRadius ?? 0, // Add border radius if missing
         boxShadow: shape.boxShadow ?? {
           offsetX: 0,
@@ -154,7 +160,7 @@ function App() {
   }
 
   const handleAlignmentAction = (action: AlignmentAction) => {
-    if (selectedShapeIds.length === 0) return
+    if (canvasState.selectedShapeIds.length === 0) return
 
     let updatedShapes: Shape[]
     
@@ -165,11 +171,11 @@ function App() {
       case 'align-top':
       case 'align-middle':
       case 'align-bottom':
-        updatedShapes = alignShapes(canvasState.shapes, selectedShapeIds, action)
+        updatedShapes = alignShapes(canvasState.shapes, canvasState.selectedShapeIds, action)
         break
       case 'distribute-horizontal':
       case 'distribute-vertical':
-        updatedShapes = distributeShapes(canvasState.shapes, selectedShapeIds, action)
+        updatedShapes = distributeShapes(canvasState.shapes, canvasState.selectedShapeIds, action)
         break
       case 'snap-to-grid':
         setCanvasState(prev => ({
@@ -194,17 +200,64 @@ function App() {
   }
 
   const handleSelectionChange = (selectedIds: string[]) => {
-    setSelectedShapeIds(selectedIds)
-    if (selectedIds.length === 1) {
-      setCanvasState(prev => ({
-        ...prev,
-        selectedShapeId: selectedIds[0]
-      }))
-    } else {
-      setCanvasState(prev => ({
-        ...prev,
-        selectedShapeId: null
-      }))
+    setCanvasState(prev => ({
+      ...prev,
+      selectedShapeIds: selectedIds,
+      selectedShapeId: selectedIds.length === 1 ? selectedIds[0] : null
+    }))
+  }
+
+  const handleGroupAction = (action: GroupAction) => {
+    try {
+      switch (action) {
+        case 'group':
+          if (!canGroupShapes(canvasState.shapes, canvasState.selectedShapeIds)) {
+            alert('Cannot group: At least 2 ungrouped shapes must be selected')
+            return
+          }
+          
+          const { shapes: updatedShapes, group } = createGroup(canvasState.shapes, canvasState.selectedShapeIds)
+          setCanvasState(prev => ({
+            ...prev,
+            shapes: updatedShapes,
+            groups: [...prev.groups, group],
+            selectedShapeIds: [group.id], // Select the new group
+            selectedGroupId: group.id
+          }))
+          break
+          
+        case 'ungroup':
+          const groupIds = getSelectedGroupIds(canvasState.shapes, canvasState.selectedShapeIds)
+          if (groupIds.length === 0) {
+            alert('No groups found in selection')
+            return
+          }
+          
+          let finalShapes = canvasState.shapes
+          let finalGroups = canvasState.groups
+          
+          // Ungroup all selected groups
+          for (const groupId of groupIds) {
+            const result = ungroupShapes(finalShapes, finalGroups, groupId)
+            finalShapes = result.shapes
+            finalGroups = result.groups
+          }
+          
+          setCanvasState(prev => ({
+            ...prev,
+            shapes: finalShapes,
+            groups: finalGroups,
+            selectedShapeIds: [], // Clear selection after ungrouping
+            selectedGroupId: null
+          }))
+          break
+          
+        default:
+          return
+      }
+    } catch (error) {
+      console.error('Group action failed:', error)
+      alert(`Group action failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -260,8 +313,9 @@ function App() {
         onToggleCssLabels={handleToggleCssLabels}
         selectedShape={selectedShape}
         onLayerAction={handleLayerAction}
-        selectedShapeIds={selectedShapeIds}
+        selectedShapeIds={canvasState.selectedShapeIds}
         onAlignmentAction={handleAlignmentAction}
+        onGroupAction={handleGroupAction}
         canvasState={canvasState}
         onCanvasUpdate={handleCanvasUpdate}
       />

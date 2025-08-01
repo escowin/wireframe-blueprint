@@ -18,6 +18,7 @@ export interface Shape {
   opacity: number
   zIndex: number
   parentId?: string  // New property for nesting support
+  groupId?: string   // New property for grouping support
   
   // Comprehensive Styling Properties (Phase 2)
   borderRadius: number  // Border radius in pixels
@@ -44,9 +45,21 @@ export interface Shape {
   }
 }
 
+export interface Group {
+  id: string
+  name: string
+  shapes: string[]  // Array of shape IDs in the group
+  position: Point
+  size: { width: number; height: number }
+  zIndex: number
+}
+
 export interface CanvasState {
   shapes: Shape[]
+  groups: Group[]
   selectedShapeId: string | null
+  selectedShapeIds: string[]  // New property for multiple selection
+  selectedGroupId: string | null
   zoom: number
   pan: Point
   gridSize: number
@@ -72,4 +85,6 @@ export type AlignmentAction =
   | 'distribute-horizontal'
   | 'distribute-vertical'
   | 'snap-to-grid'
-  | 'snap-to-edges' 
+  | 'snap-to-edges'
+
+export type GroupAction = 'group' | 'ungroup' 

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { CanvasState, Shape, Point, ToolType } from '../types'
-import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators, snapToGridPoint, snapToEdges } from '../utils/helpers'
+import { CanvasState, Shape, Point, ToolType, Group } from '../types'
+import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators, snapToGridPoint, snapToEdges, getGroupShapes } from '../utils/helpers'
 import './Canvas.scss'
 
 interface CanvasProps {
@@ -32,7 +32,6 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   const [nestingMessage, setNestingMessage] = useState<string | null>(null)
 
   // Multiple selection state
-  const [selectedShapeIds, setSelectedShapeIds] = useState<string[]>([])
   const [selectionBox, setSelectionBox] = useState<{ start: Point; end: Point } | null>(null)
 
   useImperativeHandle(ref, () => canvasRef.current!)
@@ -112,6 +111,23 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
     if (currentTool === 'select') {
       // Handle selection, drag, and resize
+      
+      // Check for group selection first
+      const clickedGroup = canvasState.groups.slice().reverse().find(group => {
+        const screenPos = canvasToScreen(group.position)
+        const screenSize = {
+          width: group.size.width * canvasState.zoom,
+          height: group.size.height * canvasState.zoom
+        }
+        return (
+          screenPoint.x >= screenPos.x &&
+          screenPoint.x <= screenPos.x + screenSize.width &&
+          screenPoint.y >= screenPos.y &&
+          screenPoint.y <= screenPos.y + screenSize.height
+        )
+      })
+
+      // Check for shape selection
       const clickedShape = canvasState.shapes.slice().reverse().find(shape => {
         const screenPos = canvasToScreen(shape.position)
         const screenSize = {
@@ -126,7 +142,39 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         )
       })
 
-      if (clickedShape) {
+      // Handle Ctrl/Cmd key for multiple selection
+      const isMultiSelect = e.ctrlKey || e.metaKey
+      
+      if (clickedGroup) {
+        // Group selection
+        const groupShapeIds = clickedGroup.shapes
+        if (isMultiSelect) {
+          // Add/remove group shapes from selection
+          const currentSelection = canvasState.selectedShapeIds || []
+          const newSelection = currentSelection.includes(groupShapeIds[0]) 
+            ? currentSelection.filter(id => !groupShapeIds.includes(id))
+            : [...currentSelection, ...groupShapeIds]
+          
+          setCanvasState(prev => ({
+            ...prev,
+            selectedShapeIds: newSelection,
+            selectedGroupId: clickedGroup.id
+          }))
+          onSelectionChange?.(newSelection)
+        } else {
+          // Select only the group
+          setCanvasState(prev => ({
+            ...prev,
+            selectedShapeIds: groupShapeIds,
+            selectedGroupId: clickedGroup.id
+          }))
+          onSelectionChange?.(groupShapeIds)
+        }
+        
+        // Start dragging the group
+        setIsDragging(true)
+        setDragStart(canvasPoint)
+      } else if (clickedShape) {
         // Check if clicking on resize handles
         const screenPos = canvasToScreen(clickedShape.position)
         const screenSize = {
@@ -178,16 +226,38 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           setDragStart(canvasPoint)
         }
 
-        setCanvasState(prev => ({
-          ...prev,
-          selectedShapeId: clickedShape.id
-        }))
+        // Handle shape selection
+        if (isMultiSelect) {
+          // Add/remove shape from selection
+          const currentSelection = canvasState.selectedShapeIds || []
+          const newSelection = currentSelection.includes(clickedShape.id)
+            ? currentSelection.filter(id => id !== clickedShape.id)
+            : [...currentSelection, clickedShape.id]
+          
+          setCanvasState(prev => ({
+            ...prev,
+            selectedShapeIds: newSelection,
+            selectedShapeId: clickedShape.id
+          }))
+          onSelectionChange?.(newSelection)
+        } else {
+          // Select only this shape
+          setCanvasState(prev => ({
+            ...prev,
+            selectedShapeIds: [clickedShape.id],
+            selectedShapeId: clickedShape.id
+          }))
+          onSelectionChange?.([clickedShape.id])
+        }
       } else {
         // Clicked on empty space, deselect
         setCanvasState(prev => ({
           ...prev,
-          selectedShapeId: null
+          selectedShapeIds: [],
+          selectedShapeId: null,
+          selectedGroupId: null
         }))
+        onSelectionChange?.([])
       }
     } else {
       // Start drawing
@@ -500,46 +570,23 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     
     if (e.ctrlKey || e.metaKey) {
       // Multi-select with Ctrl/Cmd
-      const newSelectedIds = selectedShapeIds.includes(shape.id)
-        ? selectedShapeIds.filter(id => id !== shape.id)
-        : [...selectedShapeIds, shape.id]
+      const newSelectedIds = canvasState.selectedShapeIds.includes(shape.id)
+        ? canvasState.selectedShapeIds.filter(id => id !== shape.id)
+        : [...canvasState.selectedShapeIds, shape.id]
       
-      setSelectedShapeIds(newSelectedIds)
       onSelectionChange?.(newSelectedIds)
-      
-      if (newSelectedIds.length === 1) {
-        setCanvasState(prev => ({
-          ...prev,
-          selectedShapeId: newSelectedIds[0]
-        }))
-      } else {
-        setCanvasState(prev => ({
-          ...prev,
-          selectedShapeId: null
-        }))
-      }
     } else {
       // Single select
-      setSelectedShapeIds([shape.id])
       onSelectionChange?.([shape.id])
-      setCanvasState(prev => ({
-        ...prev,
-        selectedShapeId: shape.id
-      }))
     }
-  }, [selectedShapeIds, onSelectionChange, setCanvasState])
+  }, [canvasState.selectedShapeIds, onSelectionChange])
 
   // Handle canvas click to deselect
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     if (e.target === canvasRef.current) {
-      setSelectedShapeIds([])
       onSelectionChange?.([])
-      setCanvasState(prev => ({
-        ...prev,
-        selectedShapeId: null
-      }))
     }
-  }, [onSelectionChange, setCanvasState])
+  }, [onSelectionChange])
 
   // Render grid
   const renderGrid = () => {
@@ -588,7 +635,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         height: shape.size.height * canvasState.zoom
       }
 
-      const isSelected = selectedShapeIds.includes(shape.id) || shape.id === canvasState.selectedShapeId
+      const isSelected = canvasState.selectedShapeIds.includes(shape.id) || shape.id === canvasState.selectedShapeId
       
       // Check if shape has children or is a child
       const hasChildren = canvasState.shapes.some(s => s.parentId === shape.id)
@@ -767,6 +814,61 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
             </>
           )}
         </React.Fragment>
+      )
+    })
+  }
+
+  // Render groups
+  const renderGroups = () => {
+    return canvasState.groups.map(group => {
+      const screenPos = canvasToScreen(group.position)
+      const screenSize = {
+        width: group.size.width * canvasState.zoom,
+        height: group.size.height * canvasState.zoom
+      }
+
+      const isSelected = canvasState.selectedGroupId === group.id
+      const groupShapes = getGroupShapes(canvasState.shapes, group.id)
+      const allShapesSelected = groupShapes.every(shape => 
+        canvasState.selectedShapeIds.includes(shape.id)
+      )
+
+      return (
+        <div
+          key={`group-${group.id}`}
+          className={`canvas-group ${isSelected || allShapesSelected ? 'selected' : ''}`}
+          style={{
+            position: 'absolute',
+            left: screenPos.x - 4,
+            top: screenPos.y - 4,
+            width: screenSize.width + 8,
+            height: screenSize.height + 8,
+            border: `2px ${isSelected || allShapesSelected ? 'dashed #3b82f6' : 'dashed #94a3b8'}`,
+            borderRadius: '4px',
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            pointerEvents: 'none',
+            zIndex: group.zIndex - 1
+          }}
+        >
+          {/* Group label */}
+          <div
+            className="group-label"
+            style={{
+              position: 'absolute',
+              top: -20,
+              left: 0,
+              backgroundColor: isSelected || allShapesSelected ? '#3b82f6' : '#94a3b8',
+              color: 'white',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {group.name} ({groupShapes.length})
+          </div>
+        </div>
       )
     })
   }
@@ -951,6 +1053,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
                 >
           
           {renderGrid()}
+          {renderGroups()}
           {renderShapes()}
           {renderDropZoneHighlight()}
           {renderNestingIndicators()}

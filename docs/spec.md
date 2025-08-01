@@ -188,7 +188,7 @@ Example HTML export:
 - **Nesting System**: Drag and drop shapes inside other shapes ✅ **COMPLETED**
 - **Layering**: Z-index management and layer panel ✅ **COMPLETED IN PHASE 2**
 - **Alignment Tools**: Snap to grid, snap to edges, distribution tools ✅ **COMPLETED**
-- **Grouping**: Group/ungroup multiple elements
+- **Grouping**: Group/ungroup multiple elements ✅ **COMPLETED**
 - **Templates**: Pre-built layout templates for common UI patterns
 
 ### Phase 4: File Management & Polish (Weeks 7-8) ✅ **PARTIALLY COMPLETED**
@@ -241,13 +241,14 @@ Example HTML export:
 - **Alignment Tools**: Complete alignment system with snap-to-grid, snap-to-edges, alignment tools, and distribution tools
 - **Multiple Selection**: Ctrl/Cmd + click for multi-select with visual feedback
 - **Snap Settings**: Configurable grid and edge snapping with toggle controls
+- **Grouping System**: Complete grouping functionality with group creation, ungrouping, and visual group indicators
 
 ### 🔄 **In Progress / Next Priority**
 
 #### Phase 3 Features:
 - **Nesting System**: Drag and drop shapes inside other shapes ✅ **COMPLETED**
 - **Alignment Tools**: Snap to grid, snap to edges, distribution tools ✅ **COMPLETED**
-- **Grouping**: Group/ungroup multiple elements
+- **Grouping**: Group/ungroup multiple elements ✅ **COMPLETED**
 - **Templates**: Pre-built layout templates
 
 ### 📋 **Future Phases**

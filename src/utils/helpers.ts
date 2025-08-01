@@ -1,4 +1,4 @@
-import { Shape, Point } from '../types'
+import { Shape, Point, Group } from '../types'
 
 // Generate unique ID for shapes
 export const generateId = (): string => {
@@ -1151,17 +1151,192 @@ export const getShapeBounds = (shapes: Shape[]): { left: number; right: number; 
     return { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 }
   }
 
-  const left = Math.min(...shapes.map(s => s.position.x))
-  const right = Math.max(...shapes.map(s => s.position.x + s.size.width))
-  const top = Math.min(...shapes.map(s => s.position.y))
-  const bottom = Math.max(...shapes.map(s => s.position.y + s.size.height))
+  const bounds = shapes.reduce((acc, shape) => {
+    const left = shape.position.x
+    const right = shape.position.x + shape.size.width
+    const top = shape.position.y
+    const bottom = shape.position.y + shape.size.height
+
+    return {
+      left: Math.min(acc.left, left),
+      right: Math.max(acc.right, right),
+      top: Math.min(acc.top, top),
+      bottom: Math.max(acc.bottom, bottom)
+    }
+  }, {
+    left: Infinity,
+    right: -Infinity,
+    top: Infinity,
+    bottom: -Infinity
+  })
 
   return {
-    left,
-    right,
-    top,
-    bottom,
-    width: right - left,
-    height: bottom - top
+    ...bounds,
+    width: bounds.right - bounds.left,
+    height: bounds.bottom - bounds.top
   }
+}
+
+// Grouping Functions
+
+// Create a group from selected shapes
+export const createGroup = (shapes: Shape[], selectedShapeIds: string[]): { shapes: Shape[], group: Group } => {
+  if (selectedShapeIds.length < 2) {
+    throw new Error('At least 2 shapes must be selected to create a group')
+  }
+
+  const selectedShapes = shapes.filter(shape => selectedShapeIds.includes(shape.id))
+  const groupId = generateId()
+  
+  // Calculate group bounds
+  const bounds = getShapeBounds(selectedShapes)
+  
+  // Create group
+  const group: Group = {
+    id: groupId,
+    name: `Group ${groupId.slice(-4)}`,
+    shapes: selectedShapeIds,
+    position: { x: bounds.left, y: bounds.top },
+    size: { width: bounds.width, height: bounds.height },
+    zIndex: Math.max(...selectedShapes.map(s => s.zIndex))
+  }
+
+  // Update shapes to belong to the group
+  const updatedShapes = shapes.map(shape => {
+    if (selectedShapeIds.includes(shape.id)) {
+      return {
+        ...shape,
+        groupId: groupId
+      }
+    }
+    return shape
+  })
+
+  return { shapes: updatedShapes, group }
+}
+
+// Ungroup shapes
+export const ungroupShapes = (shapes: Shape[], groups: Group[], groupId: string): { shapes: Shape[], groups: Group[] } => {
+  const group = groups.find(g => g.id === groupId)
+  if (!group) {
+    throw new Error('Group not found')
+  }
+
+  // Remove groupId from all shapes in the group
+  const updatedShapes = shapes.map(shape => {
+    if (shape.groupId === groupId) {
+      const { groupId: _, ...shapeWithoutGroup } = shape
+      return shapeWithoutGroup
+    }
+    return shape
+  })
+
+  // Remove the group
+  const updatedGroups = groups.filter(g => g.id !== groupId)
+
+  return { shapes: updatedShapes, groups: updatedGroups }
+}
+
+// Get all shapes in a group
+export const getGroupShapes = (shapes: Shape[], groupId: string): Shape[] => {
+  return shapes.filter(shape => shape.groupId === groupId)
+}
+
+// Check if shapes can be grouped (not already in groups)
+export const canGroupShapes = (shapes: Shape[], selectedShapeIds: string[]): boolean => {
+  if (selectedShapeIds.length < 2) return false
+  
+  const selectedShapes = shapes.filter(shape => selectedShapeIds.includes(shape.id))
+  return selectedShapes.every(shape => !shape.groupId)
+}
+
+// Check if selected shapes can be ungrouped
+export const canUngroupShapes = (shapes: Shape[], selectedShapeIds: string[]): boolean => {
+  if (selectedShapeIds.length === 0) return false
+  
+  const selectedShapes = shapes.filter(shape => selectedShapeIds.includes(shape.id))
+  return selectedShapes.some(shape => shape.groupId)
+}
+
+// Get unique group IDs from selected shapes
+export const getSelectedGroupIds = (shapes: Shape[], selectedShapeIds: string[]): string[] => {
+  const selectedShapes = shapes.filter(shape => selectedShapeIds.includes(shape.id))
+  const groupIds = selectedShapes.map(shape => shape.groupId).filter(Boolean) as string[]
+  return [...new Set(groupIds)]
+}
+
+// Move group
+export const moveGroup = (shapes: Shape[], groups: Group[], groupId: string, delta: Point): { shapes: Shape[], groups: Group[] } => {
+  const group = groups.find(g => g.id === groupId)
+  if (!group) {
+    throw new Error('Group not found')
+  }
+
+  // Update group position
+  const updatedGroups = groups.map(g => 
+    g.id === groupId 
+      ? { ...g, position: { x: g.position.x + delta.x, y: g.position.y + delta.y } }
+      : g
+  )
+
+  // Update all shapes in the group
+  const updatedShapes = shapes.map(shape => {
+    if (shape.groupId === groupId) {
+      return {
+        ...shape,
+        position: {
+          x: shape.position.x + delta.x,
+          y: shape.position.y + delta.y
+        }
+      }
+    }
+    return shape
+  })
+
+  return { shapes: updatedShapes, groups: updatedGroups }
+}
+
+// Resize group
+export const resizeGroup = (shapes: Shape[], groups: Group[], groupId: string, newSize: { width: number; height: number }): { shapes: Shape[], groups: Group[] } => {
+  const group = groups.find(g => g.id === groupId)
+  if (!group) {
+    throw new Error('Group not found')
+  }
+
+  const groupShapes = getGroupShapes(shapes, groupId)
+  const bounds = getShapeBounds(groupShapes)
+  
+  // Calculate scale factors
+  const scaleX = newSize.width / bounds.width
+  const scaleY = newSize.height / bounds.height
+
+  // Update group
+  const updatedGroups = groups.map(g => 
+    g.id === groupId 
+      ? { ...g, size: newSize }
+      : g
+  )
+
+  // Update all shapes in the group proportionally
+  const updatedShapes = shapes.map(shape => {
+    if (shape.groupId === groupId) {
+      const relativeX = (shape.position.x - bounds.left) / bounds.width
+      const relativeY = (shape.position.y - bounds.top) / bounds.height
+      
+      return {
+        ...shape,
+        position: {
+          x: group.position.x + (relativeX * newSize.width),
+          y: group.position.y + (relativeY * newSize.height)
+        },
+        size: {
+          width: shape.size.width * scaleX,
+          height: shape.size.height * scaleY
+        }
+      }
+    }
+    return shape
+  })
+
+  return { shapes: updatedShapes, groups: updatedGroups }
 } 
