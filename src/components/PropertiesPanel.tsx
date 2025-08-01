@@ -686,9 +686,9 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <span className="nesting-value">
                 {selectedShape.parentId ? (
                   <span className="has-parent">
-                    {canvasState?.shapes.find(s => s.id === selectedShape.parentId)?.elementTag || 'Unknown'} 
-                    {canvasState?.shapes.find(s => s.id === selectedShape.parentId)?.elementId && 
-                      `#${canvasState.shapes.find(s => s.id === selectedShape.parentId)?.elementId}`
+                    {canvasState?.shapes.find((s: Shape) => s.id === selectedShape.parentId)?.elementTag || 'Unknown'} 
+                    {canvasState?.shapes.find((s: Shape) => s.id === selectedShape.parentId)?.elementId && 
+                      `#${canvasState.shapes.find((s: Shape) => s.id === selectedShape.parentId)?.elementId}`
                     }
                   </span>
                 ) : (
@@ -702,7 +702,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <span className="nesting-label">Children:</span>
               <span className="nesting-value">
                 {(() => {
-                  const children = canvasState?.shapes.filter(s => s.parentId === selectedShape.id) || []
+                  const children = canvasState?.shapes.filter((s: Shape) => s.parentId === selectedShape.id) || []
                   return children.length > 0 ? (
                     <span className="has-children">
                       {children.length} element{children.length !== 1 ? 's' : ''}
@@ -749,15 +749,15 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               >
                 <option value="">No Parent (Root Level)</option>
                 {canvasState?.shapes
-                  .filter(s => s.id !== selectedShape.id)
-                  .map(shape => {
-                    const children = canvasState.shapes.filter(child => child.parentId === shape.id)
+                  .filter((s: Shape) => s.id !== selectedShape.id)
+                  .map((shape: Shape) => {
+                    const children = canvasState.shapes.filter((child: Shape) => child.parentId === shape.id)
                     const childCount = children.length
                     return (
                       <option key={shape.id} value={shape.id}>
                         {shape.elementTag}
                         {shape.elementId && `#${shape.elementId}`}
-                        {shape.cssClasses && ` ${shape.cssClasses.split(' ').map(cls => `.${cls}`).join('')}`}
+                        {shape.cssClasses && ` ${shape.cssClasses.split(' ').map((cls: string) => `.${cls}`).join('')}`}
                         {childCount > 0 && ` (${childCount} children)`}
                       </option>
                     )
