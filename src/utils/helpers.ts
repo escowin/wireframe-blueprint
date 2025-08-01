@@ -1,3 +1,5 @@
+import { Shape, Point } from '../types'
+
 // Generate unique ID for shapes
 export const generateId = (): string => {
   return Math.random().toString(36).substr(2, 9)
@@ -653,6 +655,7 @@ export const findDropTarget = (shapes: Shape[], draggedShape: Shape, dropPoint: 
   isValid: boolean
   confidence: number
   previewPosition: Point
+  reason?: string
 } => {
   // Filter out the dragged shape and invalid shapes
   const potentialParents = shapes.filter(shape => 
@@ -670,7 +673,8 @@ export const findDropTarget = (shapes: Shape[], draggedShape: Shape, dropPoint: 
     parentId: null as string | null,
     isValid: false,
     confidence: 0,
-    previewPosition: dropPoint
+    previewPosition: dropPoint,
+    reason: 'No suitable parent found'
   }
 
   potentialParents.forEach(parent => {
@@ -679,11 +683,12 @@ export const findDropTarget = (shapes: Shape[], draggedShape: Shape, dropPoint: 
     const parentRight = parentLeft + parent.size.width
     const parentBottom = parentTop + parent.size.height
 
-    // Check if drop point is within parent bounds
-    const isWithinBounds = dropPoint.x >= parentLeft && 
-                          dropPoint.x <= parentRight && 
-                          dropPoint.y >= parentTop && 
-                          dropPoint.y <= parentBottom
+    // More flexible bounds checking - allow some tolerance
+    const tolerance = 5 // 5px tolerance for edge cases
+    const isWithinBounds = dropPoint.x >= (parentLeft - tolerance) && 
+                          dropPoint.x <= (parentRight + tolerance) && 
+                          dropPoint.y >= (parentTop - tolerance) && 
+                          dropPoint.y <= (parentBottom + tolerance)
 
     if (isWithinBounds) {
       // Calculate how well the dragged shape would fit
@@ -700,9 +705,9 @@ export const findDropTarget = (shapes: Shape[], draggedShape: Shape, dropPoint: 
         const overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop)
         const overlapPercentage = overlapArea / draggedShapeArea
         
-        // Calculate confidence based on overlap and size ratio
+        // More generous confidence calculation
         const sizeRatio = Math.min(draggedShapeArea / parentArea, parentArea / draggedShapeArea)
-        const confidence = overlapPercentage * sizeRatio
+        const confidence = overlapPercentage * sizeRatio * 1.5 // Boost confidence by 50%
         
         if (confidence > bestTarget.confidence) {
           // Validate that this nesting would be valid
@@ -715,6 +720,30 @@ export const findDropTarget = (shapes: Shape[], draggedShape: Shape, dropPoint: 
             previewPosition: {
               x: Math.max(parentLeft, Math.min(parentRight - draggedShape.size.width, dropPoint.x)),
               y: Math.max(parentTop, Math.min(parentBottom - draggedShape.size.height, dropPoint.y))
+            },
+            reason: isValid ? 'Valid nesting target' : 'Invalid nesting (circular reference)'
+          }
+        }
+      } else {
+        // Even if no overlap, still consider it if very close
+        const distanceToParent = Math.min(
+          Math.abs(dropPoint.x - parentLeft),
+          Math.abs(dropPoint.x - parentRight),
+          Math.abs(dropPoint.y - parentTop),
+          Math.abs(dropPoint.y - parentBottom)
+        )
+        
+        if (distanceToParent < 20) { // Within 20px
+          const isValid = validateNesting(shapes, parent.id, draggedShape.id)
+          const confidence = 0.1 // Low confidence but still valid
+          
+          if (confidence > bestTarget.confidence) {
+            bestTarget = {
+              parentId: parent.id,
+              isValid,
+              confidence,
+              previewPosition: dropPoint,
+              reason: isValid ? 'Close to parent boundary' : 'Invalid nesting'
             }
           }
         }
@@ -799,7 +828,7 @@ export const getNestingIndicators = (shapes: Shape[]): Array<{
 export const applyNesting = (shapes: Shape[], childId: string, parentId: string | null): Shape[] => {
   return shapes.map(shape => 
     shape.id === childId 
-      ? { ...shape, parentId }
+      ? { ...shape, parentId: parentId || undefined }
       : shape
   )
 }
@@ -822,7 +851,7 @@ export const getAncestors = (shapes: Shape[], shapeId: string): Shape[] => {
   let currentShape = shapes.find(s => s.id === shapeId)
   
   while (currentShape && currentShape.parentId) {
-    const parent = shapes.find(s => s.id === currentShape.parentId)
+    const parent = shapes.find(s => s.id === currentShape!.parentId)
     if (parent) {
       ancestors.unshift(parent)
       currentShape = parent

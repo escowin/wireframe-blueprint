@@ -28,6 +28,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     isValid: boolean
     previewPosition: Point
   } | null>(null)
+  const [nestingMessage, setNestingMessage] = useState<string | null>(null)
 
   useImperativeHandle(ref, () => canvasRef.current!)
 
@@ -272,15 +273,26 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       // Find potential drop target for nesting
       const dropTarget = findDropTarget(canvasState.shapes, draggedShape, newPosition)
       
-      // Update nesting preview
-      setNestingPreview(dropTarget.confidence > 0.3 ? {
+      // Update nesting preview - lower threshold for easier nesting
+      setNestingPreview(dropTarget.confidence > 0.1 ? {
         parentId: dropTarget.parentId,
         isValid: dropTarget.isValid,
         previewPosition: dropTarget.previewPosition
       } : null)
       
       // Update drag target for visual feedback
-      setDragTarget(dropTarget.confidence > 0.3 ? dropTarget.parentId : null)
+      setDragTarget(dropTarget.confidence > 0.1 ? dropTarget.parentId : null)
+      
+      // Update nesting message for user feedback
+      if (dropTarget.confidence > 0.1) {
+        if (!dropTarget.isValid) {
+          setNestingMessage('Cannot nest: Circular reference detected')
+        } else {
+          setNestingMessage('Valid nesting target')
+        }
+      } else {
+        setNestingMessage(null)
+      }
       
       // Update shape position
       setCanvasState(prev => ({
@@ -409,6 +421,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     setResizeHandle('')
     setDragTarget(null)
     setNestingPreview(null)
+    setNestingMessage(null)
     
     // Restore text selection when drawing stops
     document.body.style.userSelect = ''
@@ -792,7 +805,41 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           pointerEvents: 'none',
           zIndex: 1001
         }}
+        title={nestingPreview.isValid ? 'Valid nesting target' : 'Invalid nesting - circular reference detected'}
       />
+    )
+  }
+
+  // Render nesting status message
+  const renderNestingMessage = () => {
+    if (!nestingMessage || !canvasState.selectedShapeId) return null
+    
+    const selectedShape = canvasState.shapes.find(s => s.id === canvasState.selectedShapeId)
+    if (!selectedShape) return null
+    
+    const screenPos = canvasToScreen(selectedShape.position)
+    
+    return (
+      <div
+        className="nesting-message"
+        style={{
+          position: 'absolute',
+          left: screenPos.x,
+          top: screenPos.y - 30,
+          backgroundColor: nestingMessage.includes('Cannot nest') ? '#fef2f2' : '#f0fdf4',
+          color: nestingMessage.includes('Cannot nest') ? '#dc2626' : '#059669',
+          border: `1px solid ${nestingMessage.includes('Cannot nest') ? '#fecaca' : '#bbf7d0'}`,
+          borderRadius: '4px',
+          padding: '4px 8px',
+          fontSize: '12px',
+          fontWeight: '500',
+          pointerEvents: 'none',
+          zIndex: 1002,
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {nestingMessage}
+      </div>
     )
   }
 
@@ -838,6 +885,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           {renderDropZoneHighlight()}
           {renderNestingIndicators()}
           {renderNestingPreview()}
+          {renderNestingMessage()}
         </div>
       </div>
     )

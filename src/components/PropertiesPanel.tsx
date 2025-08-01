@@ -750,15 +750,24 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <option value="">No Parent (Root Level)</option>
                 {canvasState?.shapes
                   .filter(s => s.id !== selectedShape.id)
-                  .map(shape => (
-                    <option key={shape.id} value={shape.id}>
-                      {shape.elementTag}
-                      {shape.elementId && `#${shape.elementId}`}
-                      {shape.cssClasses && ` ${shape.cssClasses.split(' ').map(cls => `.${cls}`).join('')}`}
-                    </option>
-                  ))
+                  .map(shape => {
+                    const children = canvasState.shapes.filter(child => child.parentId === shape.id)
+                    const childCount = children.length
+                    return (
+                      <option key={shape.id} value={shape.id}>
+                        {shape.elementTag}
+                        {shape.elementId && `#${shape.elementId}`}
+                        {shape.cssClasses && ` ${shape.cssClasses.split(' ').map(cls => `.${cls}`).join('')}`}
+                        {childCount > 0 && ` (${childCount} children)`}
+                      </option>
+                    )
+                  })
                 }
               </select>
+              <small className="parent-help">
+                Select a parent element to create a nested relationship. 
+                Elements with children are marked with child count.
+              </small>
             </div>
           </div>
         </div>
