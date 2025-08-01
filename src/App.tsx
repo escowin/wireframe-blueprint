@@ -3,7 +3,7 @@ import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
 import { CanvasState, Shape, ToolType } from './types'
-import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward } from './utils/helpers'
+import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes } from './utils/helpers'
 import './App.scss'
 
 function App() {
@@ -20,6 +20,7 @@ function App() {
     canvasBackgroundOpacity: 1
   })
   const [currentTool, setCurrentTool] = useState<ToolType>('select')
+  const [storageUsage, setStorageUsage] = useState<{ used: number; total: number; available: number; percentage: number } | null>(null)
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -32,6 +33,24 @@ function App() {
         clearAutoSave()
       }
     }
+  }, [])
+
+  // Check storage usage on mount and after auto-save
+  useEffect(() => {
+    const checkStorage = () => {
+      const usage = checkLocalStorageUsage()
+      setStorageUsage(usage)
+      
+      if (usage.percentage > 80) {
+        console.warn(`localStorage is ${usage.percentage.toFixed(1)}% full. Consider clearing browser data.`)
+      }
+    }
+    
+    checkStorage()
+    
+    // Check storage usage every minute
+    const interval = setInterval(checkStorage, 60000)
+    return () => clearInterval(interval)
   }, [])
 
   // Auto-save diagram every 30 seconds
@@ -194,6 +213,26 @@ function App() {
           onCanvasUpdate={handleCanvasUpdate}
         />
       </div>
+      {storageUsage && (
+        <div className="storage-indicator" style={{
+          position: 'fixed',
+          bottom: '10px',
+          right: '10px',
+          background: storageUsage.percentage > 80 ? '#ff6b6b' : '#51cf66',
+          color: 'white',
+          padding: '5px 10px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 1000
+        }}>
+          Storage: {storageUsage.percentage.toFixed(1)}% used
+          {storageUsage.percentage > 80 && (
+            <div style={{ fontSize: '10px', marginTop: '2px' }}>
+              Consider clearing browser data
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

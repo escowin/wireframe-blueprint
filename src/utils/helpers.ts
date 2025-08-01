@@ -404,7 +404,10 @@ export const convertToNestedStructure = (shapes: any[]): any => {
       borderWidth: node.borderWidth,
       borderStyle: node.borderStyle,
       opacity: node.opacity,
-      zIndex: node.zIndex
+      zIndex: node.zIndex,
+      borderRadius: node.borderRadius,
+      boxShadow: node.boxShadow,
+      typography: node.typography
     }
     
     // Add children if they exist
@@ -437,6 +440,9 @@ export const convertFromNestedStructure = (nestedShapes: any[]): any[] => {
       borderStyle: node.borderStyle,
       opacity: node.opacity,
       zIndex: node.zIndex,
+      borderRadius: node.borderRadius,
+      boxShadow: node.boxShadow,
+      typography: node.typography,
       parentId: parentId || null
     }
     
@@ -456,17 +462,18 @@ export const convertFromNestedStructure = (nestedShapes: any[]): any[] => {
 
 // Save diagram as JSON file with nested structure
 export const saveDiagram = (canvasState: any): void => {
-  // Convert shapes to nested structure for better readability
-  const nestedShapes = convertToNestedStructure(canvasState.shapes)
-  
+  // For file save, use a simple approach that preserves all shapes
+  // without relying on nesting detection that might filter out shapes
   const diagramData = {
-    version: '1.1', // Updated version to indicate nested structure
+    version: '1.2', // New version for simple save format
     timestamp: new Date().toISOString(),
     canvasState: {
       ...canvasState,
-      shapes: nestedShapes // Use nested structure instead of flat array
+      shapes: canvasState.shapes // Keep shapes as flat array for reliability
     }
   }
+  
+  console.log('Saving diagram with', canvasState.shapes.length, 'shapes using version 1.2 format')
   
   const jsonString = JSON.stringify(diagramData, null, 2)
   const blob = new Blob([jsonString], { type: 'application/json' })
@@ -478,6 +485,8 @@ export const saveDiagram = (canvasState: any): void => {
   link.click()
   
   URL.revokeObjectURL(url)
+  
+  console.log('Diagram saved successfully')
 }
 
 // Load diagram from JSON file with support for both flat and nested structures
@@ -490,6 +499,12 @@ export const loadDiagram = (file: File): Promise<any> => {
         const content = e.target?.result as string
         const diagramData = JSON.parse(content)
         
+        console.log('Loading diagram file:', {
+          version: diagramData.version,
+          timestamp: diagramData.timestamp,
+          shapesCount: diagramData.canvasState?.shapes?.length || 0
+        })
+        
         // Validate the file format
         if (!diagramData.version || !diagramData.canvasState) {
           throw new Error('Invalid diagram file format')
@@ -497,15 +512,28 @@ export const loadDiagram = (file: File): Promise<any> => {
         
         const canvasState = diagramData.canvasState
         
-        // Handle both old flat structure and new nested structure
-        if (diagramData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
-          // New nested structure - convert back to flat for canvas rendering
+        // Handle different versions
+        if (diagramData.version === '1.2') {
+          // New simple format - shapes are already flat
+          console.log('Using version 1.2 format (flat shapes)')
+        } else if (diagramData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
+          // Old nested structure - convert back to flat for canvas rendering
+          console.log('Converting nested structure to flat array...')
           canvasState.shapes = convertFromNestedStructure(canvasState.shapes)
+          console.log(`Converted ${canvasState.shapes.length} shapes from nested structure`)
+        } else {
+          console.log('Using flat structure as-is')
         }
-        // Old flat structure (version 1.0) - use as is
+        
+        console.log('Diagram loaded successfully with', canvasState.shapes.length, 'shapes')
+        
+        // Validate and ensure all shapes have required properties
+        canvasState.shapes = validateAndFixShapes(canvasState.shapes)
+        console.log('Shapes validated and fixed')
         
         resolve(canvasState)
       } catch (error) {
+        console.error('Failed to load diagram:', error)
         reject(new Error('Failed to parse diagram file'))
       }
     }
@@ -521,20 +549,26 @@ export const loadDiagram = (file: File): Promise<any> => {
 // Auto-save to localStorage with nested structure
 export const autoSave = (canvasState: any): void => {
   try {
-    // Convert shapes to nested structure for better readability
-    const nestedShapes = convertToNestedStructure(canvasState.shapes)
-    
+    // Use the same simple approach as file save for consistency
     const autoSaveData = {
-      version: '1.1', // Updated version to indicate nested structure
+      version: '1.2', // Use same version as file save
       timestamp: new Date().toISOString(),
       canvasState: {
         ...canvasState,
-        shapes: nestedShapes // Use nested structure instead of flat array
+        shapes: canvasState.shapes // Keep shapes as flat array for reliability
       }
     }
-    localStorage.setItem('diagram-autosave', JSON.stringify(autoSaveData))
+    
+    const jsonString = JSON.stringify(autoSaveData)
+    console.log(`Auto-saving diagram with ${canvasState.shapes.length} shapes, JSON size: ${jsonString.length} bytes`)
+    
+    localStorage.setItem('diagram-autosave', jsonString)
+    console.log('Auto-save successful')
   } catch (error) {
     console.warn('Failed to auto-save diagram:', error)
+    if (error instanceof Error && error.name === 'QuotaExceededError') {
+      console.error('localStorage quota exceeded! Consider clearing browser data or using file save instead.')
+    }
   }
 }
 
@@ -551,12 +585,19 @@ export const loadAutoSave = (): any | null => {
     
     const canvasState = autoSaveData.canvasState
     
-    // Handle both old flat structure and new nested structure
-    if (autoSaveData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
-      // New nested structure - convert back to flat for canvas rendering
+    // Handle different versions
+    if (autoSaveData.version === '1.2') {
+      // New simple format - shapes are already flat
+      console.log('Loading auto-save with version 1.2 format')
+    } else if (autoSaveData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
+      // Old nested structure - convert back to flat for canvas rendering
+      console.log('Converting auto-save nested structure to flat array...')
       canvasState.shapes = convertFromNestedStructure(canvasState.shapes)
     }
     // Old flat structure (version 1.0) - use as is
+    
+    // Validate and ensure all shapes have required properties
+    canvasState.shapes = validateAndFixShapes(canvasState.shapes)
     
     return canvasState
   } catch (error) {
@@ -567,7 +608,83 @@ export const loadAutoSave = (): any | null => {
 
 // Clear auto-saved diagram
 export const clearAutoSave = (): void => {
-  localStorage.removeItem('diagramAutoSave')
+  localStorage.removeItem('diagram-autosave')
+}
+
+// Validate and ensure all shapes have required properties
+export const validateAndFixShapes = (shapes: any[]): any[] => {
+  return shapes.map(shape => ({
+    id: shape.id || generateId(),
+    type: shape.type || 'rectangle',
+    position: shape.position || { x: 0, y: 0 },
+    size: shape.size || { width: 100, height: 100 },
+    elementTag: shape.elementTag || 'div',
+    cssClasses: shape.cssClasses || '',
+    elementId: shape.elementId || '',
+    fillColor: shape.fillColor || '#e2e8f0',
+    borderColor: shape.borderColor || '#64748b',
+    borderWidth: shape.borderWidth || 1,
+    borderStyle: shape.borderStyle || 'solid',
+    opacity: shape.opacity || 1,
+    zIndex: shape.zIndex || 0,
+    borderRadius: shape.borderRadius || 0,
+    boxShadow: shape.boxShadow || {
+      offsetX: 0,
+      offsetY: 0,
+      blurRadius: 0,
+      spreadRadius: 0,
+      color: '#000000',
+      enabled: false
+    },
+    typography: shape.typography || {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: 14,
+      fontWeight: 'normal',
+      fontColor: '#000000',
+      textAlign: 'left',
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      textDecoration: 'none',
+      textTransform: 'none'
+    },
+    parentId: shape.parentId || null
+  }))
+}
+
+// Check localStorage usage and capacity
+export const checkLocalStorageUsage = (): { used: number; total: number; available: number; percentage: number } => {
+  let used = 0
+  let total = 0
+  
+  try {
+    // Calculate used space
+    for (let key in localStorage) {
+      if (localStorage.hasOwnProperty(key)) {
+        used += localStorage[key].length + key.length
+      }
+    }
+    
+    // Estimate total capacity (varies by browser, typically 5-10MB)
+    total = 5 * 1024 * 1024 // Assume 5MB as conservative estimate
+    
+    // Try to get actual quota if available
+    if ('storage' in navigator && 'estimate' in navigator.storage) {
+      navigator.storage.estimate().then(estimate => {
+        if (estimate.quota) {
+          total = estimate.quota
+        }
+      }).catch(() => {
+        // Fallback to estimate
+      })
+    }
+  } catch (error) {
+    console.warn('Could not calculate localStorage usage:', error)
+  }
+  
+  const available = total - used
+  const percentage = total > 0 ? (used / total) * 100 : 0
+  
+  return { used, total, available, percentage }
 }
 
 // Layer management functions
