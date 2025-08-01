@@ -967,7 +967,7 @@ export const getAncestors = (shapes: Shape[], shapeId: string): Shape[] => {
   const ancestors: Shape[] = []
   let currentShape = shapes.find(s => s.id === shapeId)
   
-  while (currentShape && currentShape.parentId) {
+  while (currentShape?.parentId) {
     const parent = shapes.find(s => s.id === currentShape!.parentId)
     if (parent) {
       ancestors.unshift(parent)
@@ -978,4 +978,190 @@ export const getAncestors = (shapes: Shape[], shapeId: string): Shape[] => {
   }
   
   return ancestors
+}
+
+// Alignment utility functions
+export const snapToGridValue = (value: number, gridSize: number): number => {
+  return Math.round(value / gridSize) * gridSize
+}
+
+export const snapToGridPoint = (point: Point, gridSize: number): Point => {
+  return {
+    x: snapToGridValue(point.x, gridSize),
+    y: snapToGridValue(point.y, gridSize)
+  }
+}
+
+export const snapToEdges = (shapes: Shape[], targetShape: Shape, snapDistance: number = 5): Point => {
+  const targetBounds = {
+    left: targetShape.position.x,
+    right: targetShape.position.x + targetShape.size.width,
+    top: targetShape.position.y,
+    bottom: targetShape.position.y + targetShape.size.height,
+    centerX: targetShape.position.x + targetShape.size.width / 2,
+    centerY: targetShape.position.y + targetShape.size.height / 2
+  }
+
+  let snappedPosition = { ...targetShape.position }
+  let snapped = false
+
+  shapes.forEach(shape => {
+    if (shape.id === targetShape.id) return
+
+    const shapeBounds = {
+      left: shape.position.x,
+      right: shape.position.x + shape.size.width,
+      top: shape.position.y,
+      bottom: shape.position.y + shape.size.height,
+      centerX: shape.position.x + shape.size.width / 2,
+      centerY: shape.position.y + shape.size.height / 2
+    }
+
+    // Snap left edges
+    if (Math.abs(targetBounds.left - shapeBounds.left) < snapDistance) {
+      snappedPosition.x = shapeBounds.left
+      snapped = true
+    }
+    // Snap right edges
+    if (Math.abs(targetBounds.right - shapeBounds.right) < snapDistance) {
+      snappedPosition.x = shapeBounds.right - targetShape.size.width
+      snapped = true
+    }
+    // Snap centers horizontally
+    if (Math.abs(targetBounds.centerX - shapeBounds.centerX) < snapDistance) {
+      snappedPosition.x = shapeBounds.centerX - targetShape.size.width / 2
+      snapped = true
+    }
+    // Snap top edges
+    if (Math.abs(targetBounds.top - shapeBounds.top) < snapDistance) {
+      snappedPosition.y = shapeBounds.top
+      snapped = true
+    }
+    // Snap bottom edges
+    if (Math.abs(targetBounds.bottom - shapeBounds.bottom) < snapDistance) {
+      snappedPosition.y = shapeBounds.bottom - targetShape.size.height
+      snapped = true
+    }
+    // Snap centers vertically
+    if (Math.abs(targetBounds.centerY - shapeBounds.centerY) < snapDistance) {
+      snappedPosition.y = shapeBounds.centerY - targetShape.size.height / 2
+      snapped = true
+    }
+  })
+
+  return snappedPosition
+}
+
+export const alignShapes = (shapes: Shape[], selectedShapeIds: string[], alignment: string): Shape[] => {
+  if (selectedShapeIds.length < 2) return shapes
+
+  const selectedShapes = shapes.filter(shape => selectedShapeIds.includes(shape.id))
+  const referenceShape = selectedShapes[0]
+  
+  return shapes.map(shape => {
+    if (!selectedShapeIds.includes(shape.id)) return shape
+
+    const updatedShape = { ...shape }
+    
+    switch (alignment) {
+      case 'align-left':
+        updatedShape.position.x = referenceShape.position.x
+        break
+      case 'align-center':
+        updatedShape.position.x = referenceShape.position.x + referenceShape.size.width / 2 - shape.size.width / 2
+        break
+      case 'align-right':
+        updatedShape.position.x = referenceShape.position.x + referenceShape.size.width - shape.size.width
+        break
+      case 'align-top':
+        updatedShape.position.y = referenceShape.position.y
+        break
+      case 'align-middle':
+        updatedShape.position.y = referenceShape.position.y + referenceShape.size.height / 2 - shape.size.height / 2
+        break
+      case 'align-bottom':
+        updatedShape.position.y = referenceShape.position.y + referenceShape.size.height - shape.size.height
+        break
+    }
+    
+    return updatedShape
+  })
+}
+
+export const distributeShapes = (shapes: Shape[], selectedShapeIds: string[], distribution: string): Shape[] => {
+  if (selectedShapeIds.length < 3) return shapes
+
+  const selectedShapes = shapes.filter(shape => selectedShapeIds.includes(shape.id))
+  const sortedShapes = [...selectedShapes].sort((a, b) => {
+    if (distribution === 'distribute-horizontal') {
+      return a.position.x - b.position.x
+    } else {
+      return a.position.y - b.position.y
+    }
+  })
+
+  const firstShape = sortedShapes[0]
+  const lastShape = sortedShapes[sortedShapes.length - 1]
+  
+  let totalSpace: number
+  let totalSize: number = 0
+  
+  if (distribution === 'distribute-horizontal') {
+    totalSpace = lastShape.position.x - firstShape.position.x
+    sortedShapes.forEach(shape => {
+      totalSize += shape.size.width
+    })
+  } else {
+    totalSpace = lastShape.position.y - firstShape.position.y
+    sortedShapes.forEach(shape => {
+      totalSize += shape.size.height
+    })
+  }
+
+  const spacing = (totalSpace - totalSize) / (sortedShapes.length - 1)
+  
+  return shapes.map(shape => {
+    if (!selectedShapeIds.includes(shape.id)) return shape
+
+    const shapeIndex = sortedShapes.findIndex(s => s.id === shape.id)
+    if (shapeIndex === 0 || shapeIndex === sortedShapes.length - 1) return shape
+
+    const updatedShape = { ...shape }
+    
+    if (distribution === 'distribute-horizontal') {
+      let newX = firstShape.position.x
+      for (let i = 0; i < shapeIndex; i++) {
+        newX += sortedShapes[i].size.width + spacing
+      }
+      updatedShape.position.x = newX
+    } else {
+      let newY = firstShape.position.y
+      for (let i = 0; i < shapeIndex; i++) {
+        newY += sortedShapes[i].size.height + spacing
+      }
+      updatedShape.position.y = newY
+    }
+    
+    return updatedShape
+  })
+}
+
+export const getShapeBounds = (shapes: Shape[]): { left: number; right: number; top: number; bottom: number; width: number; height: number } => {
+  if (shapes.length === 0) {
+    return { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 }
+  }
+
+  const left = Math.min(...shapes.map(s => s.position.x))
+  const right = Math.max(...shapes.map(s => s.position.x + s.size.width))
+  const top = Math.min(...shapes.map(s => s.position.y))
+  const bottom = Math.max(...shapes.map(s => s.position.y + s.size.height))
+
+  return {
+    left,
+    right,
+    top,
+    bottom,
+    width: right - left,
+    height: bottom - top
+  }
 } 

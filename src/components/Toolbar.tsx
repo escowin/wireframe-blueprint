@@ -1,5 +1,5 @@
 import React from 'react'
-import { ToolType, Shape } from '../types'
+import { ToolType, Shape, AlignmentAction, CanvasState } from '../types'
 import './Toolbar.scss'
 
 interface ToolbarProps {
@@ -13,6 +13,10 @@ interface ToolbarProps {
   onToggleCssLabels?: () => void
   selectedShape?: Shape | null
   onLayerAction?: (action: 'front' | 'back' | 'forward' | 'backward') => void
+  selectedShapeIds?: string[]
+  onAlignmentAction?: (action: AlignmentAction) => void
+  canvasState?: CanvasState
+  onCanvasUpdate?: (updates: any) => void
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -25,7 +29,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   showCssLabels = false,
   onToggleCssLabels,
   selectedShape,
-  onLayerAction
+  onLayerAction,
+  selectedShapeIds = [],
+  onAlignmentAction,
+  canvasState,
+  onCanvasUpdate
 }) => {
   const tools = [
     { id: 'select' as ToolType, label: 'Select', icon: '👆' },
@@ -94,6 +102,117 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </div>
         </div>
       )}
+
+      {/* Alignment Tools Section */}
+      {selectedShapeIds.length > 0 && (
+        <div className="toolbar-section">
+          <h3 className="toolbar-title">Alignment</h3>
+          <div className="toolbar-actions">
+            <div className="alignment-buttons">
+              {/* Horizontal Alignment */}
+              <div className="alignment-row">
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('align-left')}
+                  title="Align Left"
+                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                >
+                  ⇤
+                </button>
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('align-center')}
+                  title="Align Center"
+                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                >
+                  ⇔
+                </button>
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('align-right')}
+                  title="Align Right"
+                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                >
+                  ⇥
+                </button>
+              </div>
+              
+              {/* Vertical Alignment */}
+              <div className="alignment-row">
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('align-top')}
+                  title="Align Top"
+                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                >
+                  ⇧
+                </button>
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('align-middle')}
+                  title="Align Middle"
+                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                >
+                  ⇕
+                </button>
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('align-bottom')}
+                  title="Align Bottom"
+                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                >
+                  ⇩
+                </button>
+              </div>
+              
+              {/* Distribution */}
+              <div className="alignment-row">
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('distribute-horizontal')}
+                  title="Distribute Horizontally"
+                  disabled={selectedShapeIds.length < 3 || !onAlignmentAction}
+                >
+                  ⇹
+                </button>
+                <button
+                  className="btn btn--secondary alignment-btn"
+                  onClick={() => onAlignmentAction?.('distribute-vertical')}
+                  title="Distribute Vertically"
+                  disabled={selectedShapeIds.length < 3 || !onAlignmentAction}
+                >
+                  ⇳
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Snap Settings Section */}
+      <div className="toolbar-section">
+        <h3 className="toolbar-title">Snap Settings</h3>
+        <div className="toolbar-actions">
+          <div className="snap-buttons">
+            <button
+              className={`btn ${canvasState?.snapToGrid ? 'btn--primary' : 'btn--secondary'} snap-btn`}
+              onClick={() => onAlignmentAction?.('snap-to-grid')}
+              title="Toggle Snap to Grid"
+              disabled={!onAlignmentAction}
+            >
+              Grid Snap
+            </button>
+            <button
+              className={`btn ${canvasState?.snapToEdges ? 'btn--primary' : 'btn--secondary'} snap-btn`}
+              onClick={() => onAlignmentAction?.('snap-to-edges')}
+              title="Toggle Snap to Edges"
+              disabled={!onAlignmentAction}
+            >
+              Edge Snap
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="toolbar-section">
         <h3 className="toolbar-title">File</h3>

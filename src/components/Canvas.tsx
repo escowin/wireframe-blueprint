@@ -1,15 +1,16 @@
 import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { CanvasState, Shape, Point, ToolType } from '../types'
-import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators } from '../utils/helpers'
+import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators, snapToGridPoint, snapToEdges } from '../utils/helpers'
 import './Canvas.scss'
 
 interface CanvasProps {
   canvasState: CanvasState
   setCanvasState: (state: CanvasState | ((prev: CanvasState) => CanvasState)) => void
   currentTool: ToolType
+  onSelectionChange?: (selectedIds: string[]) => void
 }
 
-const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvasState, currentTool }, ref) => {
+const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvasState, currentTool, onSelectionChange }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawStart, setDrawStart] = useState<Point | null>(null)
@@ -29,6 +30,10 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     previewPosition: Point
   } | null>(null)
   const [nestingMessage, setNestingMessage] = useState<string | null>(null)
+
+  // Multiple selection state
+  const [selectedShapeIds, setSelectedShapeIds] = useState<string[]>([])
+  const [selectionBox, setSelectionBox] = useState<{ start: Point; end: Point } | null>(null)
 
   useImperativeHandle(ref, () => canvasRef.current!)
 
@@ -265,9 +270,19 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       
       const deltaX = canvasPoint.x - dragStart.x
       const deltaY = canvasPoint.y - dragStart.y
-      const newPosition = { 
+      let newPosition = { 
         x: draggedShape.position.x + deltaX, 
         y: draggedShape.position.y + deltaY 
+      }
+      
+      // Apply snapping
+      if (canvasState.snapToGrid) {
+        newPosition = snapToGridPoint(newPosition, canvasState.gridSnapSize)
+      }
+      
+      if (canvasState.snapToEdges) {
+        const tempShape = { ...draggedShape, position: newPosition }
+        newPosition = snapToEdges(canvasState.shapes, tempShape, 5)
       }
       
       // Find potential drop target for nesting
@@ -353,6 +368,13 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         case 'e':
           newSize.width = Math.max(10, originalShape.size.width + deltaX)
           break
+      }
+      
+      // Apply snapping to position and size
+      if (canvasState.snapToGrid) {
+        newPosition = snapToGridPoint(newPosition, canvasState.gridSnapSize)
+        newSize.width = Math.round(newSize.width / canvasState.gridSnapSize) * canvasState.gridSnapSize
+        newSize.height = Math.round(newSize.height / canvasState.gridSnapSize) * canvasState.gridSnapSize
       }
       
 
@@ -472,6 +494,53 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     setPanStart(null)
   }, [])
 
+  // Handle shape selection
+  const handleShapeClick = useCallback((e: React.MouseEvent, shape: Shape) => {
+    e.stopPropagation()
+    
+    if (e.ctrlKey || e.metaKey) {
+      // Multi-select with Ctrl/Cmd
+      const newSelectedIds = selectedShapeIds.includes(shape.id)
+        ? selectedShapeIds.filter(id => id !== shape.id)
+        : [...selectedShapeIds, shape.id]
+      
+      setSelectedShapeIds(newSelectedIds)
+      onSelectionChange?.(newSelectedIds)
+      
+      if (newSelectedIds.length === 1) {
+        setCanvasState(prev => ({
+          ...prev,
+          selectedShapeId: newSelectedIds[0]
+        }))
+      } else {
+        setCanvasState(prev => ({
+          ...prev,
+          selectedShapeId: null
+        }))
+      }
+    } else {
+      // Single select
+      setSelectedShapeIds([shape.id])
+      onSelectionChange?.([shape.id])
+      setCanvasState(prev => ({
+        ...prev,
+        selectedShapeId: shape.id
+      }))
+    }
+  }, [selectedShapeIds, onSelectionChange, setCanvasState])
+
+  // Handle canvas click to deselect
+  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === canvasRef.current) {
+      setSelectedShapeIds([])
+      onSelectionChange?.([])
+      setCanvasState(prev => ({
+        ...prev,
+        selectedShapeId: null
+      }))
+    }
+  }, [onSelectionChange, setCanvasState])
+
   // Render grid
   const renderGrid = () => {
     if (!canvasState.showGrid) return null
@@ -519,7 +588,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         height: shape.size.height * canvasState.zoom
       }
 
-      const isSelected = shape.id === canvasState.selectedShapeId
+      const isSelected = selectedShapeIds.includes(shape.id) || shape.id === canvasState.selectedShapeId
       
       // Check if shape has children or is a child
       const hasChildren = canvasState.shapes.some(s => s.parentId === shape.id)
@@ -553,7 +622,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
               textDecoration: shape.typography.textDecoration,
               textTransform: shape.typography.textTransform
             }}
-
+            onClick={(e) => handleShapeClick(e, shape)}
           >
             <div className="shape-label">
               {canvasState.showCssLabels ? (
@@ -875,6 +944,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
             handleMouseUp()
             handleMouseUpPan()
           }}
+          onClick={handleCanvasClick}
           onWheel={handleWheel}
           onContextMenu={(e) => e.preventDefault()}
           onDragStart={(e) => e.preventDefault()}

@@ -54,6 +54,22 @@ export interface CanvasState {
   showCssLabels: boolean
   canvasBackgroundColor: string
   canvasBackgroundOpacity: number
+  // Alignment settings
+  snapToGrid: boolean
+  snapToEdges: boolean
+  gridSnapSize: number
 }
 
-export type ToolType = 'select' | 'rectangle' | 'circle' 
+export type ToolType = 'select' | 'rectangle' | 'circle'
+
+export type AlignmentAction = 
+  | 'align-left' 
+  | 'align-center' 
+  | 'align-right' 
+  | 'align-top' 
+  | 'align-middle' 
+  | 'align-bottom'
+  | 'distribute-horizontal'
+  | 'distribute-vertical'
+  | 'snap-to-grid'
+  | 'snap-to-edges' 

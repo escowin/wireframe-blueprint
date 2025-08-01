@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
-import { CanvasState, Shape, ToolType } from './types'
-import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes } from './utils/helpers'
+import { CanvasState, Shape, ToolType, AlignmentAction } from './types'
+import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes } from './utils/helpers'
 import './App.scss'
 
 function App() {
@@ -17,10 +17,15 @@ function App() {
     showGrid: true,
     showCssLabels: false,
     canvasBackgroundColor: '#ffffff',
-    canvasBackgroundOpacity: 1
+    canvasBackgroundOpacity: 1,
+    // Alignment settings
+    snapToGrid: true,
+    snapToEdges: true,
+    gridSnapSize: 20
   })
   const [currentTool, setCurrentTool] = useState<ToolType>('select')
   const [storageUsage, setStorageUsage] = useState<{ used: number; total: number; available: number; percentage: number } | null>(null)
+  const [selectedShapeIds, setSelectedShapeIds] = useState<string[]>([])
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -66,6 +71,9 @@ function App() {
   const migrateCanvasState = (canvasState: any): CanvasState => {
     return {
       ...canvasState,
+      snapToGrid: canvasState.snapToGrid ?? true,
+      snapToEdges: canvasState.snapToEdges ?? true,
+      gridSnapSize: canvasState.gridSnapSize ?? 20,
       shapes: canvasState.shapes.map((shape: any) => ({
         ...shape,
         elementId: shape.elementId || '', // Add elementId if missing
@@ -145,6 +153,61 @@ function App() {
     }))
   }
 
+  const handleAlignmentAction = (action: AlignmentAction) => {
+    if (selectedShapeIds.length === 0) return
+
+    let updatedShapes: Shape[]
+    
+    switch (action) {
+      case 'align-left':
+      case 'align-center':
+      case 'align-right':
+      case 'align-top':
+      case 'align-middle':
+      case 'align-bottom':
+        updatedShapes = alignShapes(canvasState.shapes, selectedShapeIds, action)
+        break
+      case 'distribute-horizontal':
+      case 'distribute-vertical':
+        updatedShapes = distributeShapes(canvasState.shapes, selectedShapeIds, action)
+        break
+      case 'snap-to-grid':
+        setCanvasState(prev => ({
+          ...prev,
+          snapToGrid: !prev.snapToGrid
+        }))
+        return
+      case 'snap-to-edges':
+        setCanvasState(prev => ({
+          ...prev,
+          snapToEdges: !prev.snapToEdges
+        }))
+        return
+      default:
+        return
+    }
+    
+    setCanvasState(prev => ({
+      ...prev,
+      shapes: updatedShapes
+    }))
+  }
+
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedShapeIds(selectedIds)
+    if (selectedIds.length === 1) {
+      setCanvasState(prev => ({
+        ...prev,
+        selectedShapeId: selectedIds[0]
+      }))
+    } else {
+      setCanvasState(prev => ({
+        ...prev,
+        selectedShapeId: null
+      }))
+    }
+  }
+
   const handleCanvasUpdate = (updates: any) => {
     setCanvasState(prev => ({
       ...prev,
@@ -197,6 +260,10 @@ function App() {
         onToggleCssLabels={handleToggleCssLabels}
         selectedShape={selectedShape}
         onLayerAction={handleLayerAction}
+        selectedShapeIds={selectedShapeIds}
+        onAlignmentAction={handleAlignmentAction}
+        canvasState={canvasState}
+        onCanvasUpdate={handleCanvasUpdate}
       />
       <div className="app-main">
         <Canvas 
@@ -204,6 +271,7 @@ function App() {
           canvasState={canvasState}
           setCanvasState={setCanvasState}
           currentTool={currentTool}
+          onSelectionChange={handleSelectionChange}
         />
         <PropertiesPanel 
           selectedShape={selectedShape}

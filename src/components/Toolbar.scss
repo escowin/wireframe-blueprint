@@ -144,4 +144,67 @@
       }
     }
   }
+}
+
+// Alignment Tools Styles
+.alignment-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  
+  .alignment-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: $spacing-xs;
+    
+    .alignment-btn {
+      padding: $spacing-xs;
+      font-size: $font-size-sm;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+}
+
+// Snap Settings Styles
+.snap-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  
+  .snap-btn {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      
+      &:hover {
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  }
 } 

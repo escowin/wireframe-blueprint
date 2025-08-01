@@ -187,7 +187,7 @@ Example HTML export:
 ### Phase 3: Layout & Hierarchy (Weeks 5-6) 🔄 **IN PROGRESS**
 - **Nesting System**: Drag and drop shapes inside other shapes ✅ **COMPLETED**
 - **Layering**: Z-index management and layer panel ✅ **COMPLETED IN PHASE 2**
-- **Alignment Tools**: Snap to grid, snap to edges, distribution tools
+- **Alignment Tools**: Snap to grid, snap to edges, distribution tools ✅ **COMPLETED**
 - **Grouping**: Group/ungroup multiple elements
 - **Templates**: Pre-built layout templates for common UI patterns
 
@@ -238,12 +238,15 @@ Example HTML export:
 - **Comprehensive Styling**: Border radius, box shadows with full control (offset, blur, spread, color)
 - **Typography System**: Complete typography controls with font family, size, weight, color, alignment, and text effects
 - **Type Safety**: Full TypeScript implementation with proper error handling
+- **Alignment Tools**: Complete alignment system with snap-to-grid, snap-to-edges, alignment tools, and distribution tools
+- **Multiple Selection**: Ctrl/Cmd + click for multi-select with visual feedback
+- **Snap Settings**: Configurable grid and edge snapping with toggle controls
 
 ### 🔄 **In Progress / Next Priority**
 
 #### Phase 3 Features:
-- **Nesting System**: Drag and drop shapes inside other shapes (foundation exists)
-- **Alignment Tools**: Snap to grid, snap to edges, distribution tools
+- **Nesting System**: Drag and drop shapes inside other shapes ✅ **COMPLETED**
+- **Alignment Tools**: Snap to grid, snap to edges, distribution tools ✅ **COMPLETED**
 - **Grouping**: Group/ungroup multiple elements
 - **Templates**: Pre-built layout templates
 
