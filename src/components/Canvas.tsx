@@ -264,7 +264,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       setIsDrawing(true)
       setDrawStart(canvasPoint)
     }
-  }, [currentTool, canvasState.shapes, screenToCanvas, canvasToScreen, setCanvasState, isDrawing])
+  }, [currentTool, canvasState.shapes, canvasState.selectedShapeIds, screenToCanvas, canvasToScreen, setCanvasState, isDrawing, onSelectionChange])
 
   // Handle mouse move on canvas
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -503,7 +503,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       }))
     }
 
-    // Reset all states
+    // Reset drawing and dragging states only
     setIsDrawing(false)
     setDrawStart(null)
     setIsDragging(false)
@@ -564,22 +564,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     setPanStart(null)
   }, [])
 
-  // Handle shape selection
-  const handleShapeClick = useCallback((e: React.MouseEvent, shape: Shape) => {
-    e.stopPropagation()
-    
-    if (e.ctrlKey || e.metaKey) {
-      // Multi-select with Ctrl/Cmd
-      const newSelectedIds = canvasState.selectedShapeIds.includes(shape.id)
-        ? canvasState.selectedShapeIds.filter(id => id !== shape.id)
-        : [...canvasState.selectedShapeIds, shape.id]
-      
-      onSelectionChange?.(newSelectedIds)
-    } else {
-      // Single select
-      onSelectionChange?.([shape.id])
-    }
-  }, [canvasState.selectedShapeIds, onSelectionChange])
+
 
   // Handle canvas click to deselect
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
@@ -669,7 +654,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
               textDecoration: shape.typography.textDecoration,
               textTransform: shape.typography.textTransform
             }}
-            onClick={(e) => handleShapeClick(e, shape)}
+
           >
             <div className="shape-label">
               {canvasState.showCssLabels ? (
