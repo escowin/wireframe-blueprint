@@ -235,4 +235,42 @@
       }
     }
   }
+}
+
+// Version History Styles
+.version-history-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  
+  .version-btn {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      
+      &:hover {
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.version-info {
+  text-align: center;
+  margin-top: $spacing-xs;
+  
+  small {
+    color: $text-secondary;
+    font-size: $font-size-xs;
+  }
 } 

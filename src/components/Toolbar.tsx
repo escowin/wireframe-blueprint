@@ -1,5 +1,6 @@
 import React from 'react'
-import { ToolType, Shape, AlignmentAction, CanvasState, GroupAction } from '../types'
+import { ToolType, Shape, AlignmentAction, CanvasState, GroupAction, VersionHistory } from '../types'
+import { getVersionHistoryInfo } from '../utils/versionHistory'
 import Templates from './Templates'
 import './Toolbar.scss'
 
@@ -20,6 +21,10 @@ interface ToolbarProps {
   canvasState?: CanvasState
   onCanvasUpdate?: (updates: any) => void
   onApplyTemplate?: (templateId: string) => void
+  onShowVersionHistory?: () => void
+  onUndo?: () => void
+  onRedo?: () => void
+  versionHistory?: VersionHistory
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -38,7 +43,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onGroupAction,
   canvasState,
   onCanvasUpdate,
-  onApplyTemplate
+  onApplyTemplate,
+  onShowVersionHistory,
+  onUndo,
+  onRedo,
+  versionHistory
 }) => {
   const tools = [
     { id: 'select' as ToolType, label: 'Select', icon: '👆' },
@@ -280,6 +289,46 @@ const Toolbar: React.FC<ToolbarProps> = ({
               style={{ display: 'none' }}
             />
           </label>
+        </div>
+      </div>
+
+      {/* Version History Section */}
+      <div className="toolbar-section">
+        <h3 className="toolbar-title">Version History</h3>
+        <div className="toolbar-actions">
+          <div className="version-history-buttons">
+            <button
+              className="btn btn--secondary version-btn"
+              onClick={onUndo}
+              title="Undo (Ctrl+Z)"
+              disabled={!versionHistory || !getVersionHistoryInfo(versionHistory).canUndo}
+            >
+              ↩ Undo
+            </button>
+            <button
+              className="btn btn--secondary version-btn"
+              onClick={onRedo}
+              title="Redo (Ctrl+Y)"
+              disabled={!versionHistory || !getVersionHistoryInfo(versionHistory).canRedo}
+            >
+              ↪ Redo
+            </button>
+            <button
+              className="btn btn--primary version-btn"
+              onClick={onShowVersionHistory}
+              title="View Version History"
+              disabled={!versionHistory}
+            >
+              📋 History
+            </button>
+          </div>
+          {versionHistory && (
+            <div className="version-info">
+              <small>
+                {getVersionHistoryInfo(versionHistory).totalEntries} versions
+              </small>
+            </div>
+          )}
         </div>
       </div>
 

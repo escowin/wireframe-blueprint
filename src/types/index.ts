@@ -104,4 +104,29 @@ export interface TemplateCategory {
   name: string
   description: string
   templates: Template[]
+}
+
+// Version History Types
+export interface VersionHistoryEntry {
+  id: string
+  timestamp: number
+  description: string
+  canvasState: CanvasState
+  action: string
+  userId?: string
+}
+
+export interface VersionHistory {
+  entries: VersionHistoryEntry[]
+  currentIndex: number
+  maxEntries: number
+}
+
+export interface VersionHistoryAction {
+  type: 'add' | 'undo' | 'redo' | 'clear' | 'jump'
+  payload?: {
+    description?: string
+    action?: string
+    targetIndex?: number
+  }
 } 

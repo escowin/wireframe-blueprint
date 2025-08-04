@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
-import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction } from './types'
+import VersionHistoryComponent from './components/VersionHistory'
+import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction, VersionHistory } from './types'
 import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds, applyTemplate } from './utils/helpers'
+import { initializeVersionHistory, addVersionEntry, undoVersion, redoVersion, loadVersionHistory, saveVersionHistory, hasCanvasStateChanged, getChangeSummary } from './utils/versionHistory'
 import './App.scss'
 
 function App() {
@@ -28,6 +30,12 @@ function App() {
   })
   const [currentTool, setCurrentTool] = useState<ToolType>('select')
   const [storageUsage, setStorageUsage] = useState<{ used: number; total: number; available: number; percentage: number } | null>(null)
+  const [versionHistory, setVersionHistory] = useState<VersionHistory>(() => {
+    const saved = loadVersionHistory()
+    return saved || initializeVersionHistory(50)
+  })
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [lastCanvasState, setLastCanvasState] = useState<CanvasState | null>(null)
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -68,6 +76,36 @@ function App() {
 
     return () => clearInterval(interval)
   }, [canvasState])
+
+  // Track canvas state changes for version history
+  useEffect(() => {
+    if (lastCanvasState && hasCanvasStateChanged(lastCanvasState, canvasState)) {
+      const changeSummary = getChangeSummary(lastCanvasState, canvasState)
+      const newHistory = addVersionEntry(versionHistory, canvasState, changeSummary, 'auto')
+      setVersionHistory(newHistory)
+      saveVersionHistory(newHistory)
+    }
+    setLastCanvasState(canvasState)
+  }, [canvasState, lastCanvasState, versionHistory])
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault()
+        handleUndo()
+      } else if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+        event.preventDefault()
+        handleRedo()
+      } else if ((event.ctrlKey || event.metaKey) && event.key === 'z' && event.shiftKey) {
+        event.preventDefault()
+        handleRedo()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [versionHistory]) // Add versionHistory as dependency
 
   // Migration function to handle existing shapes without new properties
   const migrateCanvasState = (canvasState: any): CanvasState => {
@@ -122,6 +160,8 @@ function App() {
         shape.id === updatedShape.id ? updatedShape : shape
       )
     }))
+    // Add manual version entry for shape updates
+    handleAddManualVersion('Updated shape properties', 'style')
   }
 
   const handleShapesUpdate = (updatedShapes: Shape[]) => {
@@ -129,6 +169,8 @@ function App() {
       ...prev,
       shapes: updatedShapes
     }))
+    // Add manual version entry for shape updates
+    handleAddManualVersion('Updated multiple shapes', 'move')
   }
 
   const handleLayerAction = (action: 'front' | 'back' | 'forward' | 'backward') => {
@@ -224,6 +266,7 @@ function App() {
             selectedShapeIds: [group.id], // Select the new group
             selectedGroupId: group.id
           }))
+          handleAddManualVersion('Created group', 'group')
           break
           
         case 'ungroup':
@@ -250,6 +293,7 @@ function App() {
             selectedShapeIds: [], // Clear selection after ungrouping
             selectedGroupId: null
           }))
+          handleAddManualVersion('Ungrouped shapes', 'ungroup')
           break
           
         default:
@@ -269,6 +313,7 @@ function App() {
         shapes: result.shapes,
         groups: result.groups
       }))
+      handleAddManualVersion('Applied template', 'template')
     } catch (error) {
       console.error('Template application failed:', error)
       alert(`Failed to apply template: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -314,6 +359,47 @@ function App() {
     }))
   }
 
+  // Version History Handlers
+  const handleShowVersionHistory = () => {
+    setShowVersionHistory(true)
+  }
+
+  const handleHideVersionHistory = () => {
+    setShowVersionHistory(false)
+  }
+
+  const handleRestoreVersion = (restoredState: CanvasState) => {
+    setCanvasState(restoredState)
+    // Add a manual entry for the restore action
+    const newHistory = addVersionEntry(versionHistory, restoredState, 'Restored from version history', 'restore')
+    setVersionHistory(newHistory)
+    saveVersionHistory(newHistory)
+  }
+
+  const handleUndo = () => {
+    const result = undoVersion(versionHistory)
+    if (result.canvasState) {
+      setCanvasState(result.canvasState)
+      setVersionHistory(result.history)
+      saveVersionHistory(result.history)
+    }
+  }
+
+  const handleRedo = () => {
+    const result = redoVersion(versionHistory)
+    if (result.canvasState) {
+      setCanvasState(result.canvasState)
+      setVersionHistory(result.history)
+      saveVersionHistory(result.history)
+    }
+  }
+
+  const handleAddManualVersion = (description: string, action: string = 'manual') => {
+    const newHistory = addVersionEntry(versionHistory, canvasState, description, action)
+    setVersionHistory(newHistory)
+    saveVersionHistory(newHistory)
+  }
+
   return (
     <div className="app">
       <Toolbar 
@@ -333,6 +419,10 @@ function App() {
         canvasState={canvasState}
         onCanvasUpdate={handleCanvasUpdate}
         onApplyTemplate={handleApplyTemplate}
+        onShowVersionHistory={handleShowVersionHistory}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        versionHistory={versionHistory}
       />
       <div className="app-main">
         <Canvas 
@@ -350,6 +440,17 @@ function App() {
           onCanvasUpdate={handleCanvasUpdate}
         />
       </div>
+      
+      {/* Version History Modal */}
+      {showVersionHistory && (
+        <VersionHistoryComponent
+          history={versionHistory}
+          onHistoryChange={setVersionHistory}
+          onRestoreVersion={handleRestoreVersion}
+          onClose={handleHideVersionHistory}
+        />
+      )}
+      
       {storageUsage && (
         <div className="storage-indicator" style={{
           position: 'fixed',
