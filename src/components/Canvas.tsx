@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
 import { CanvasState, Shape, Point, ToolType, Group } from '../types'
 import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators, snapToGridPoint, snapToEdges, getGroupShapes } from '../utils/helpers'
 import './Canvas.scss'
@@ -9,6 +9,258 @@ interface CanvasProps {
   currentTool: ToolType
   onSelectionChange?: (selectedIds: string[]) => void
 }
+
+// Optimized Shape Component with React.memo
+interface ShapeComponentProps {
+  shape: Shape
+  isSelected: boolean
+  hasChildren: boolean
+  isChild: boolean
+  zoom: number
+  pan: Point
+  currentTool: ToolType
+  showCssLabels: boolean
+  onResizeHandleClick: (e: React.MouseEvent, handleType: string, shape: Shape) => void
+}
+
+const ShapeComponent = React.memo<ShapeComponentProps>(({ 
+  shape, 
+  isSelected, 
+  hasChildren, 
+  isChild, 
+  zoom, 
+  pan, 
+  currentTool, 
+  showCssLabels,
+  onResizeHandleClick 
+}) => {
+  // Memoize expensive calculations
+  const screenPos = useMemo(() => ({
+    x: shape.position.x * zoom + pan.x,
+    y: shape.position.y * zoom + pan.y
+  }), [shape.position.x, shape.position.y, zoom, pan.x, pan.y])
+
+  const screenSize = useMemo(() => ({
+    width: shape.size.width * zoom,
+    height: shape.size.height * zoom
+  }), [shape.size.width, shape.size.height, zoom])
+
+  // Memoize complex style calculations
+  const shapeStyles = useMemo(() => ({
+    position: 'absolute' as const,
+    left: screenPos.x,
+    top: screenPos.y,
+    width: screenSize.width,
+    height: screenSize.height,
+    backgroundColor: hexToRgba(shape.fillColor, shape.opacity),
+    border: `${shape.borderWidth * zoom}px ${shape.borderStyle} ${shape.borderColor}`,
+    borderRadius: shape.type === 'circle' ? '50%' : `${shape.borderRadius * zoom}px`,
+    zIndex: shape.zIndex,
+    cursor: isSelected ? 'move' : 'pointer',
+    boxShadow: shape.boxShadow.enabled 
+      ? `${shape.boxShadow.offsetX * zoom}px ${shape.boxShadow.offsetY * zoom}px ${shape.boxShadow.blurRadius * zoom}px ${shape.boxShadow.spreadRadius * zoom}px ${shape.boxShadow.color}`
+      : 'none',
+    fontFamily: shape.typography.fontFamily,
+    fontSize: `${shape.typography.fontSize * zoom}px`,
+    fontWeight: shape.typography.fontWeight,
+    color: shape.typography.fontColor,
+    textAlign: shape.typography.textAlign,
+    lineHeight: shape.typography.lineHeight,
+    letterSpacing: `${shape.typography.letterSpacing * zoom}px`,
+    textDecoration: shape.typography.textDecoration,
+    textTransform: shape.typography.textTransform
+  }), [
+    screenPos.x, screenPos.y, screenSize.width, screenSize.height,
+    shape.fillColor, shape.opacity, shape.borderWidth, zoom, shape.borderStyle,
+    shape.borderColor, shape.type, shape.borderRadius, shape.zIndex, isSelected,
+    shape.boxShadow, shape.typography
+  ])
+
+  // Memoize CSS class string
+  const shapeClassName = useMemo(() => {
+    const classes = ['canvas-shape', shape.type]
+    if (isSelected) classes.push('selected')
+    if (hasChildren) classes.push('has-children')
+    if (isChild) classes.push('is-child')
+    return classes.join(' ')
+  }, [shape.type, isSelected, hasChildren, isChild])
+
+  // Memoize shape label
+  const shapeLabel = useMemo(() => {
+    if (showCssLabels) {
+      return (
+        <span>
+          &lt;{shape.elementTag}
+          {shape.elementId && `#${shape.elementId}`}
+          {shape.cssClasses && shape.cssClasses.split(' ').map(cls => `.${cls}`).join('')}
+          &gt;
+        </span>
+      )
+    }
+    return <span>&lt;{shape.elementTag}&gt;</span>
+  }, [showCssLabels, shape.elementTag, shape.elementId, shape.cssClasses])
+
+  // Memoize resize handles
+  const resizeHandles = useMemo(() => {
+    if (!isSelected || currentTool !== 'select') return null
+
+    const handleStyle = {
+      position: 'absolute' as const,
+      width: 12,
+      height: 12,
+      backgroundColor: '#3b82f6',
+      border: '1px solid white',
+      zIndex: shape.zIndex + 1
+    }
+
+    return (
+      <>
+        {/* Corner handles */}
+        <div
+          className="resize-handle resize-handle-nw"
+          style={{
+            ...handleStyle,
+            left: screenPos.x - 6,
+            top: screenPos.y - 6,
+            cursor: 'nw-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 'nw', shape)}
+        />
+        <div
+          className="resize-handle resize-handle-ne"
+          style={{
+            ...handleStyle,
+            left: screenPos.x + screenSize.width - 6,
+            top: screenPos.y - 6,
+            cursor: 'ne-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 'ne', shape)}
+        />
+        <div
+          className="resize-handle resize-handle-sw"
+          style={{
+            ...handleStyle,
+            left: screenPos.x - 6,
+            top: screenPos.y + screenSize.height - 6,
+            cursor: 'sw-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 'sw', shape)}
+        />
+        <div
+          className="resize-handle resize-handle-se"
+          style={{
+            ...handleStyle,
+            left: screenPos.x + screenSize.width - 6,
+            top: screenPos.y + screenSize.height - 6,
+            cursor: 'se-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 'se', shape)}
+        />
+        
+        {/* Edge handles */}
+        <div
+          className="resize-handle resize-handle-n"
+          style={{
+            ...handleStyle,
+            left: screenPos.x + screenSize.width / 2 - 6,
+            top: screenPos.y - 6,
+            cursor: 'n-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 'n', shape)}
+        />
+        <div
+          className="resize-handle resize-handle-s"
+          style={{
+            ...handleStyle,
+            left: screenPos.x + screenSize.width / 2 - 6,
+            top: screenPos.y + screenSize.height - 6,
+            cursor: 's-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 's', shape)}
+        />
+        <div
+          className="resize-handle resize-handle-w"
+          style={{
+            ...handleStyle,
+            left: screenPos.x - 6,
+            top: screenPos.y + screenSize.height / 2 - 6,
+            cursor: 'w-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 'w', shape)}
+        />
+        <div
+          className="resize-handle resize-handle-e"
+          style={{
+            ...handleStyle,
+            left: screenPos.x + screenSize.width - 6,
+            top: screenPos.y + screenSize.height / 2 - 6,
+            cursor: 'e-resize'
+          }}
+          onMouseDown={(e) => onResizeHandleClick(e, 'e', shape)}
+        />
+      </>
+    )
+  }, [isSelected, currentTool, screenPos, screenSize, shape.zIndex, shape, onResizeHandleClick])
+
+  return (
+    <React.Fragment>
+      <div className={shapeClassName} style={shapeStyles}>
+        <div className="shape-label">
+          {shapeLabel}
+        </div>
+      </div>
+      {resizeHandles}
+    </React.Fragment>
+  )
+})
+
+ShapeComponent.displayName = 'ShapeComponent'
+
+// Optimized Grid Component with React.memo
+interface GridComponentProps {
+  showGrid: boolean
+  gridSize: number
+  zoom: number
+}
+
+const GridComponent = React.memo<GridComponentProps>(({ showGrid, gridSize, zoom }) => {
+  if (!showGrid) return null
+
+  const memoizedGridSize = useMemo(() => gridSize * zoom, [gridSize, zoom])
+
+  return (
+    <svg
+      className="canvas-grid"
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none'
+      }}
+    >
+      <defs>
+        <pattern
+          id="grid"
+          width={memoizedGridSize}
+          height={memoizedGridSize}
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d={`M ${memoizedGridSize} 0 L 0 0 0 ${memoizedGridSize}`}
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth="1"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)" />
+    </svg>
+  )
+})
+
+GridComponent.displayName = 'GridComponent'
 
 const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvasState, currentTool, onSelectionChange }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -49,7 +301,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       x: (screenPoint.x - canvasState.pan.x) / canvasState.zoom,
       y: (screenPoint.y - canvasState.pan.y) / canvasState.zoom
     }
-  }, [canvasState.pan, canvasState.zoom])
+  }, [canvasState.pan.x, canvasState.pan.y, canvasState.zoom])
 
   // Convert canvas coordinates to screen coordinates
   const canvasToScreen = useCallback((canvasPoint: Point): Point => {
@@ -57,7 +309,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       x: canvasPoint.x * canvasState.zoom + canvasState.pan.x,
       y: canvasPoint.y * canvasState.zoom + canvasState.pan.y
     }
-  }, [canvasState.pan, canvasState.zoom])
+  }, [canvasState.pan.x, canvasState.pan.y, canvasState.zoom])
 
   // Handle resize handle click
   const handleResizeHandleClick = useCallback((e: React.MouseEvent, handleType: string, shape: Shape) => {
@@ -573,53 +825,11 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
   }, [onSelectionChange])
 
-  // Render grid
-  const renderGrid = () => {
-    if (!canvasState.showGrid) return null
 
-    const gridSize = canvasState.gridSize * canvasState.zoom
 
-    return (
-      <svg
-        className="canvas-grid"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none'
-        }}
-      >
-        <defs>
-          <pattern
-            id="grid"
-            width={gridSize}
-            height={gridSize}
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d={`M ${gridSize} 0 L 0 0 0 ${gridSize}`}
-              fill="none"
-              stroke="#e2e8f0"
-              strokeWidth="1"
-            />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
-    )
-  }
-
-  // Render shapes
-  const renderShapes = () => {
+  // Render shapes with memoization
+  const renderShapes = useMemo(() => {
     return canvasState.shapes.map(shape => {
-      const screenPos = canvasToScreen(shape.position)
-      const screenSize = {
-        width: shape.size.width * canvasState.zoom,
-        height: shape.size.height * canvasState.zoom
-      }
-
       const isSelected = canvasState.selectedShapeIds.includes(shape.id) || shape.id === canvasState.selectedShapeId
       
       // Check if shape has children or is a child
@@ -627,184 +837,33 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       const isChild = shape.parentId !== undefined && shape.parentId !== null
 
       return (
-        <React.Fragment key={shape.id}>
-          <div
-            className={`canvas-shape ${shape.type} ${isSelected ? 'selected' : ''} ${hasChildren ? 'has-children' : ''} ${isChild ? 'is-child' : ''}`}
-            style={{
-              position: 'absolute',
-              left: screenPos.x,
-              top: screenPos.y,
-              width: screenSize.width,
-              height: screenSize.height,
-              backgroundColor: hexToRgba(shape.fillColor, shape.opacity),
-              border: `${shape.borderWidth * canvasState.zoom}px ${shape.borderStyle} ${shape.borderColor}`,
-              borderRadius: shape.type === 'circle' ? '50%' : `${shape.borderRadius * canvasState.zoom}px`,
-              zIndex: shape.zIndex,
-              cursor: isSelected ? 'move' : 'pointer',
-              boxShadow: shape.boxShadow.enabled 
-                ? `${shape.boxShadow.offsetX * canvasState.zoom}px ${shape.boxShadow.offsetY * canvasState.zoom}px ${shape.boxShadow.blurRadius * canvasState.zoom}px ${shape.boxShadow.spreadRadius * canvasState.zoom}px ${shape.boxShadow.color}`
-                : 'none',
-              fontFamily: shape.typography.fontFamily,
-              fontSize: `${shape.typography.fontSize * canvasState.zoom}px`,
-              fontWeight: shape.typography.fontWeight,
-              color: shape.typography.fontColor,
-              textAlign: shape.typography.textAlign,
-              lineHeight: shape.typography.lineHeight,
-              letterSpacing: `${shape.typography.letterSpacing * canvasState.zoom}px`,
-              textDecoration: shape.typography.textDecoration,
-              textTransform: shape.typography.textTransform
-            }}
-
-          >
-            <div className="shape-label">
-              {canvasState.showCssLabels ? (
-                <span>
-                  &lt;{shape.elementTag}
-                  {shape.elementId && `#${shape.elementId}`}
-                  {shape.cssClasses && shape.cssClasses.split(' ').map(cls => `.${cls}`).join('')}
-                  &gt;
-                </span>
-              ) : (
-                <span>&lt;{shape.elementTag}&gt;</span>
-              )}
-            </div>
-          </div>
-          
-          {/* Render resize handles for selected shapes */}
-          {isSelected && currentTool === 'select' && (
-            <>
-              {/* Corner handles */}
-              <div
-                className="resize-handle resize-handle-nw"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x - 6,
-                  top: screenPos.y - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 'nw-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 'nw', shape)}
-              />
-              <div
-                className="resize-handle resize-handle-ne"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x + screenSize.width - 6,
-                  top: screenPos.y - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 'ne-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 'ne', shape)}
-              />
-              <div
-                className="resize-handle resize-handle-sw"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x - 6,
-                  top: screenPos.y + screenSize.height - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 'sw-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 'sw', shape)}
-              />
-              <div
-                className="resize-handle resize-handle-se"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x + screenSize.width - 6,
-                  top: screenPos.y + screenSize.height - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 'se-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 'se', shape)}
-              />
-              
-              {/* Edge handles */}
-              <div
-                className="resize-handle resize-handle-n"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x + screenSize.width / 2 - 6,
-                  top: screenPos.y - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 'n-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 'n', shape)}
-              />
-              <div
-                className="resize-handle resize-handle-s"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x + screenSize.width / 2 - 6,
-                  top: screenPos.y + screenSize.height - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 's-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 's', shape)}
-              />
-              <div
-                className="resize-handle resize-handle-w"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x - 6,
-                  top: screenPos.y + screenSize.height / 2 - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 'w-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 'w', shape)}
-              />
-              <div
-                className="resize-handle resize-handle-e"
-                style={{
-                  position: 'absolute',
-                  left: screenPos.x + screenSize.width - 6,
-                  top: screenPos.y + screenSize.height / 2 - 6,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid white',
-                  cursor: 'e-resize',
-                  zIndex: shape.zIndex + 1
-                }}
-                onMouseDown={(e) => handleResizeHandleClick(e, 'e', shape)}
-              />
-            </>
-          )}
-        </React.Fragment>
+        <ShapeComponent
+          key={shape.id}
+          shape={shape}
+          isSelected={isSelected}
+          hasChildren={hasChildren}
+          isChild={isChild}
+          zoom={canvasState.zoom}
+          pan={canvasState.pan}
+          currentTool={currentTool}
+          showCssLabels={canvasState.showCssLabels}
+          onResizeHandleClick={handleResizeHandleClick}
+        />
       )
     })
-  }
+  }, [
+    canvasState.shapes,
+    canvasState.selectedShapeIds,
+    canvasState.selectedShapeId,
+    canvasState.zoom,
+    canvasState.pan,
+    canvasState.showCssLabels,
+    currentTool,
+    handleResizeHandleClick
+  ])
 
-  // Render groups
-  const renderGroups = () => {
+  // Render groups with memoization
+  const renderGroups = useMemo(() => {
     return canvasState.groups.map(group => {
       const screenPos = canvasToScreen(group.position)
       const screenSize = {
@@ -856,10 +915,17 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         </div>
       )
     })
-  }
+  }, [
+    canvasState.groups,
+    canvasState.shapes,
+    canvasState.selectedGroupId,
+    canvasState.selectedShapeIds,
+    canvasState.zoom,
+    canvasToScreen
+  ])
 
-  // Render drop zone highlighting for nesting
-  const renderDropZoneHighlight = () => {
+  // Render drop zone highlighting for nesting with memoization
+  const renderDropZoneHighlight = useMemo(() => {
     if (!dragTarget || !nestingPreview) return null
     
     const targetShape = canvasState.shapes.find(s => s.id === dragTarget)
@@ -888,10 +954,10 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         }}
       />
     )
-  }
+  }, [dragTarget, nestingPreview, canvasState.shapes, canvasState.zoom, canvasToScreen])
 
-  // Render nesting indicators
-  const renderNestingIndicators = () => {
+  // Render nesting indicators with memoization
+  const renderNestingIndicators = useMemo(() => {
     const indicators = getNestingIndicators(canvasState.shapes)
     
     return indicators.map(indicator => {
@@ -931,10 +997,10 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         </div>
       )
     })
-  }
+  }, [canvasState.shapes, canvasState.zoom, canvasToScreen])
 
-  // Render nesting preview
-  const renderNestingPreview = () => {
+  // Render nesting preview with memoization
+  const renderNestingPreview = useMemo(() => {
     if (!nestingPreview || !canvasState.selectedShapeId) return null
     
     const selectedShape = canvasState.shapes.find(s => s.id === canvasState.selectedShapeId)
@@ -964,10 +1030,10 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         title={nestingPreview.isValid ? 'Valid nesting target' : 'Invalid nesting - circular reference detected'}
       />
     )
-  }
+  }, [nestingPreview, canvasState.selectedShapeId, canvasState.shapes, canvasState.zoom, canvasToScreen])
 
-  // Render nesting status message
-  const renderNestingMessage = () => {
+  // Render nesting status message with memoization
+  const renderNestingMessage = useMemo(() => {
     if (!nestingMessage || !canvasState.selectedShapeId) return null
     
     const selectedShape = canvasState.shapes.find(s => s.id === canvasState.selectedShapeId)
@@ -997,7 +1063,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
         {nestingMessage}
       </div>
     )
-  }
+  }, [nestingMessage, canvasState.selectedShapeId, canvasState.shapes, canvasToScreen])
 
   return (
     <div 
@@ -1037,13 +1103,17 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           onDragStart={(e) => e.preventDefault()}
                 >
           
-          {renderGrid()}
-          {renderGroups()}
-          {renderShapes()}
-          {renderDropZoneHighlight()}
-          {renderNestingIndicators()}
-          {renderNestingPreview()}
-          {renderNestingMessage()}
+          <GridComponent 
+            showGrid={canvasState.showGrid}
+            gridSize={canvasState.gridSize}
+            zoom={canvasState.zoom}
+          />
+          {renderGroups}
+          {renderShapes}
+          {renderDropZoneHighlight}
+          {renderNestingIndicators}
+          {renderNestingPreview}
+          {renderNestingMessage}
         </div>
       </div>
     )
