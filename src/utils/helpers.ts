@@ -1407,3 +1407,65 @@ export const getTemplatePreview = (templateId: string): { shapes: Shape[], group
     groups: template.groups
   }
 } 
+
+/**
+ * Debounce utility function
+ * Delays the execution of a function until after a specified delay
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout | null = null
+  
+  return (...args: Parameters<T>) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+    
+    timeoutId = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+}
+
+/**
+ * Throttle utility function
+ * Limits the execution of a function to a maximum frequency
+ */
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean = false
+  
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args)
+      inThrottle = true
+      setTimeout(() => {
+        inThrottle = false
+      }, limit)
+    }
+  }
+}
+
+/**
+ * RequestAnimationFrame throttle utility
+ * Uses requestAnimationFrame for smooth, performant throttling
+ */
+export function rafThrottle<T extends (...args: any[]) => any>(
+  func: T
+): (...args: Parameters<T>) => void {
+  let ticking: boolean = false
+  
+  return (...args: Parameters<T>) => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        func(...args)
+        ticking = false
+      })
+      ticking = true
+    }
+  }
+} 

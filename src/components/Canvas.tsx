@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
 import { CanvasState, Shape, Point, ToolType, Group } from '../types'
-import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators, snapToGridPoint, snapToEdges, getGroupShapes } from '../utils/helpers'
+import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators, snapToGridPoint, snapToEdges, getGroupShapes, rafThrottle, debounce } from '../utils/helpers'
 import './Canvas.scss'
 
 interface CanvasProps {
@@ -518,8 +518,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
   }, [currentTool, canvasState.shapes, canvasState.selectedShapeIds, screenToCanvas, canvasToScreen, setCanvasState, isDrawing, onSelectionChange])
 
-  // Handle mouse move on canvas
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  // Handle mouse move on canvas (optimized version)
+  const handleMouseMoveOptimized = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) {
       return
     }
@@ -715,6 +715,9 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
   }, [isDrawing, drawStart, isDragging, isResizing, dragStart, resizeStart, resizeHandle, currentTool, screenToCanvas, canvasState.shapes.length, canvasState.selectedShapeId, setCanvasState])
 
+  // Create throttled version of mouse move handler
+  const handleMouseMove = rafThrottle(handleMouseMoveOptimized)
+
   // Handle mouse up on canvas
   const handleMouseUp = useCallback(() => {
     if (isDrawing && drawStart) {
@@ -771,8 +774,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     document.body.style.userSelect = ''
   }, [isDrawing, drawStart, isDragging, isResizing, resizeHandle, nestingPreview, canvasState.selectedShapeId, setCanvasState])
 
-  // Handle zoom with mouse wheel
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  // Handle zoom with mouse wheel (optimized version)
+  const handleWheelOptimized = useCallback((e: React.WheelEvent) => {
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
     const newZoom = Math.max(0.25, Math.min(4, canvasState.zoom * zoomFactor))
     
@@ -781,6 +784,9 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       zoom: newZoom
     }))
   }, [canvasState.zoom, setCanvasState])
+
+  // Create throttled version of wheel handler
+  const handleWheel = rafThrottle(handleWheelOptimized)
 
   // Handle pan with middle mouse button
   const [isPanning, setIsPanning] = useState(false)
@@ -794,7 +800,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
   }, [])
 
-  const handleMouseMovePan = useCallback((e: React.MouseEvent) => {
+  // Optimized mouse move pan handler with RAF throttling
+  const handleMouseMovePanOptimized = useCallback((e: React.MouseEvent) => {
     if (!isPanning || !panStart) return
 
     const deltaX = e.clientX - panStart.x
@@ -810,6 +817,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
     setPanStart({ x: e.clientX, y: e.clientY })
   }, [isPanning, panStart, setCanvasState])
+
+  const handleMouseMovePan = rafThrottle(handleMouseMovePanOptimized)
 
   const handleMouseUpPan = useCallback(() => {
     setIsPanning(false)
