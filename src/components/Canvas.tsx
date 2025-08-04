@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
 import { CanvasState, Shape, Point, ToolType, Group } from '../types'
 import { generateId, hexToRgba, findDropTarget, validateNesting, applyNesting, getNestingIndicators, snapToGridPoint, snapToEdges, getGroupShapes, rafThrottle, debounce } from '../utils/helpers'
+import { calculateViewport, getShapesToRender, getGroupsToRender, createVirtualizationStats, VirtualizationConfig } from '../utils/virtualization'
 import './Canvas.scss'
 
 interface CanvasProps {
@@ -286,6 +287,14 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   // Multiple selection state
   const [selectionBox, setSelectionBox] = useState<{ start: Point; end: Point } | null>(null)
 
+  // Virtualization state
+  const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 })
+  const virtualizationStats = useMemo(() => createVirtualizationStats(), [])
+  const virtualizationConfig: VirtualizationConfig = useMemo(() => ({
+    bufferSize: 200,
+    minShapeSize: 10
+  }), [])
+
   useImperativeHandle(ref, () => canvasRef.current!)
 
   // Cleanup effect to restore text selection when component unmounts
@@ -310,6 +319,41 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       y: canvasPoint.y * canvasState.zoom + canvasState.pan.y
     }
   }, [canvasState.pan.x, canvasState.pan.y, canvasState.zoom])
+
+  // Calculate current viewport for virtualization
+  const viewport = useMemo(() => {
+    return calculateViewport(
+      canvasDimensions.width,
+      canvasDimensions.height,
+      canvasState.zoom,
+      canvasState.pan,
+      virtualizationConfig.bufferSize
+    )
+  }, [canvasDimensions.width, canvasDimensions.height, canvasState.zoom, canvasState.pan, virtualizationConfig.bufferSize])
+
+  // Track canvas dimensions
+  useEffect(() => {
+    const updateCanvasDimensions = () => {
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect()
+        setCanvasDimensions({
+          width: rect.width,
+          height: rect.height
+        })
+      }
+    }
+
+    updateCanvasDimensions()
+    
+    const resizeObserver = new ResizeObserver(updateCanvasDimensions)
+    if (canvasRef.current) {
+      resizeObserver.observe(canvasRef.current)
+    }
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
 
   // Handle resize handle click
   const handleResizeHandleClick = useCallback((e: React.MouseEvent, handleType: string, shape: Shape) => {
@@ -774,8 +818,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     document.body.style.userSelect = ''
   }, [isDrawing, drawStart, isDragging, isResizing, resizeHandle, nestingPreview, canvasState.selectedShapeId, setCanvasState])
 
-  // Handle zoom with mouse wheel (optimized version)
-  const handleWheelOptimized = useCallback((e: React.WheelEvent) => {
+  // Handle zoom with mouse wheel
+  const handleWheel = useCallback((e: React.WheelEvent) => {
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
     const newZoom = Math.max(0.25, Math.min(4, canvasState.zoom * zoomFactor))
     
@@ -784,9 +828,6 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
       zoom: newZoom
     }))
   }, [canvasState.zoom, setCanvasState])
-
-  // Create throttled version of wheel handler
-  const handleWheel = rafThrottle(handleWheelOptimized)
 
   // Handle pan with middle mouse button
   const [isPanning, setIsPanning] = useState(false)
@@ -836,9 +877,26 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
 
 
 
-  // Render shapes with memoization
+  // Render shapes with virtualization
   const renderShapes = useMemo(() => {
-    return canvasState.shapes.map(shape => {
+    // Get shapes to render based on viewport and selection
+    const shapesToRender = getShapesToRender(
+      canvasState.shapes,
+      viewport,
+      canvasState.selectedShapeIds,
+      canvasState.selectedShapeId,
+      virtualizationConfig
+    )
+
+    // Update virtualization stats
+    virtualizationStats.update({
+      totalShapes: canvasState.shapes.length,
+      renderedShapes: shapesToRender.length,
+      totalGroups: canvasState.groups.length,
+      renderedGroups: 0 // Will be updated in renderGroups
+    })
+
+    return shapesToRender.map(shape => {
       const isSelected = canvasState.selectedShapeIds.includes(shape.id) || shape.id === canvasState.selectedShapeId
       
       // Check if shape has children or is a child
@@ -868,12 +926,32 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     canvasState.pan,
     canvasState.showCssLabels,
     currentTool,
-    handleResizeHandleClick
+    handleResizeHandleClick,
+    viewport,
+    virtualizationConfig,
+    virtualizationStats
   ])
 
-  // Render groups with memoization
+  // Render groups with virtualization
   const renderGroups = useMemo(() => {
-    return canvasState.groups.map(group => {
+    // Get groups to render based on viewport and selection
+    const groupsToRender = getGroupsToRender(
+      canvasState.groups,
+      viewport,
+      canvasState.selectedGroupId,
+      virtualizationConfig
+    )
+
+    // Update virtualization stats with group count
+    const currentStats = virtualizationStats.getStats()
+    virtualizationStats.update({
+      totalShapes: currentStats.totalShapes,
+      renderedShapes: currentStats.renderedShapes,
+      totalGroups: canvasState.groups.length,
+      renderedGroups: groupsToRender.length
+    })
+
+    return groupsToRender.map(group => {
       const screenPos = canvasToScreen(group.position)
       const screenSize = {
         width: group.size.width * canvasState.zoom,
@@ -930,7 +1008,10 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     canvasState.selectedGroupId,
     canvasState.selectedShapeIds,
     canvasState.zoom,
-    canvasToScreen
+    canvasToScreen,
+    viewport,
+    virtualizationConfig,
+    virtualizationStats
   ])
 
   // Render drop zone highlighting for nesting with memoization
@@ -1123,9 +1204,38 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
           {renderNestingIndicators}
           {renderNestingPreview}
           {renderNestingMessage}
+          
+          {/* Virtualization Stats Display */}
+          {(() => {
+            const stats = virtualizationStats.getStats()
+            if (stats.totalShapes > 50 || stats.totalGroups > 10) {
+              return (
+                <div
+                  className="virtualization-stats"
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontFamily: 'monospace',
+                    zIndex: 1003,
+                    pointerEvents: 'none'
+                  }}
+                >
+                  <div>Shapes: {stats.renderedShapes}/{stats.totalShapes} ({stats.shapeReduction}% reduction)</div>
+                  <div>Groups: {stats.renderedGroups}/{stats.totalGroups} ({stats.groupReduction}% reduction)</div>
+                </div>
+              )
+            }
+            return null
+          })()}
         </div>
       </div>
     )
 })
 
-export default Canvas 
+export default Canvas
