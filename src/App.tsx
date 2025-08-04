@@ -470,13 +470,6 @@ function App() {
           canvasState={canvasState}
           onCanvasUpdate={handleCanvasUpdate}
         />
-        <PropertiesPanel 
-          selectedShape={selectedShape}
-          onShapeUpdate={handleShapeUpdate}
-          onShapesUpdate={handleShapesUpdate}
-          canvasState={canvasState}
-          onCanvasUpdate={handleCanvasUpdate}
-        />
       </div>
       
       {/* Version History Modal */}

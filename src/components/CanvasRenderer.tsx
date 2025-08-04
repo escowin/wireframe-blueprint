@@ -177,8 +177,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       }
     }
 
-    // Draw text if shape has content
-    if (shape.elementId || shape.cssClasses) {
+    // Draw text for all shapes (even those without ID or classes)
+    if (shape.elementTag) {
       // Create text background for better readability
       // Format text like the original DOM rendering: <tag#id.class1.class2>
       let text = ''
