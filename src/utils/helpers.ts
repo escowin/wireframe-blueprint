@@ -1,4 +1,5 @@
 import { Shape, Point, Group } from '../types'
+import { Template, getTemplateById } from './templates'
 
 // Generate unique ID for shapes
 export const generateId = (): string => {
@@ -1339,4 +1340,70 @@ export const resizeGroup = (shapes: Shape[], groups: Group[], groupId: string, n
   })
 
   return { shapes: updatedShapes, groups: updatedGroups }
+} 
+
+// Apply template to canvas
+export const applyTemplate = (templateId: string, currentShapes: Shape[], currentGroups: Group[]): { shapes: Shape[], groups: Group[] } => {
+  const template = getTemplateById(templateId)
+  
+  if (!template) {
+    console.error(`Template with ID ${templateId} not found`)
+    return { shapes: currentShapes, groups: currentGroups }
+  }
+
+  // Generate new IDs for all template shapes to avoid conflicts
+  const newShapes = template.shapes.map(shape => ({
+    ...shape,
+    id: generateId()
+  }))
+
+  // Generate new IDs for all template groups
+  const newGroups = template.groups.map(group => ({
+    ...group,
+    id: generateId(),
+    shapes: group.shapes.map(shapeId => {
+      // Find the corresponding new shape ID
+      const originalShape = template.shapes.find(s => s.id === shapeId)
+      const newShape = newShapes.find(s => 
+        s.position.x === originalShape?.position.x && 
+        s.position.y === originalShape?.position.y &&
+        s.size.width === originalShape?.size.width &&
+        s.size.height === originalShape?.size.height
+      )
+      return newShape?.id || shapeId
+    })
+  }))
+
+  // Update shape groupId references to match new group IDs
+  const updatedShapes = newShapes.map(shape => {
+    if (shape.groupId) {
+      const originalGroup = template.groups.find(g => g.id === shape.groupId)
+      const newGroup = newGroups.find(g => 
+        g.name === originalGroup?.name &&
+        g.shapes.length === originalGroup?.shapes.length
+      )
+      return { ...shape, groupId: newGroup?.id }
+    }
+    return shape
+  })
+
+  // Combine with existing shapes and groups
+  const combinedShapes = [...currentShapes, ...updatedShapes]
+  const combinedGroups = [...currentGroups, ...newGroups]
+
+  return { shapes: combinedShapes, groups: combinedGroups }
+}
+
+// Get template preview data
+export const getTemplatePreview = (templateId: string): { shapes: Shape[], groups: Group[] } | null => {
+  const template = getTemplateById(templateId)
+  
+  if (!template) {
+    return null
+  }
+
+  return {
+    shapes: template.shapes,
+    groups: template.groups
+  }
 } 

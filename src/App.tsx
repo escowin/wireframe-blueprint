@@ -3,7 +3,7 @@ import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
 import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction } from './types'
-import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds } from './utils/helpers'
+import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds, applyTemplate } from './utils/helpers'
 import './App.scss'
 
 function App() {
@@ -261,6 +261,20 @@ function App() {
     }
   }
 
+  const handleApplyTemplate = (templateId: string) => {
+    try {
+      const result = applyTemplate(templateId, canvasState.shapes, canvasState.groups)
+      setCanvasState(prev => ({
+        ...prev,
+        shapes: result.shapes,
+        groups: result.groups
+      }))
+    } catch (error) {
+      console.error('Template application failed:', error)
+      alert(`Failed to apply template: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
   const handleCanvasUpdate = (updates: any) => {
     setCanvasState(prev => ({
       ...prev,
@@ -318,6 +332,7 @@ function App() {
         onGroupAction={handleGroupAction}
         canvasState={canvasState}
         onCanvasUpdate={handleCanvasUpdate}
+        onApplyTemplate={handleApplyTemplate}
       />
       <div className="app-main">
         <Canvas 

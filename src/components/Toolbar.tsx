@@ -1,5 +1,6 @@
 import React from 'react'
 import { ToolType, Shape, AlignmentAction, CanvasState, GroupAction } from '../types'
+import Templates from './Templates'
 import './Toolbar.scss'
 
 interface ToolbarProps {
@@ -18,6 +19,7 @@ interface ToolbarProps {
   onGroupAction?: (action: GroupAction) => void
   canvasState?: CanvasState
   onCanvasUpdate?: (updates: any) => void
+  onApplyTemplate?: (templateId: string) => void
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -35,7 +37,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onAlignmentAction,
   onGroupAction,
   canvasState,
-  onCanvasUpdate
+  onCanvasUpdate,
+  onApplyTemplate
 }) => {
   const tools = [
     { id: 'select' as ToolType, label: 'Select', icon: '👆' },
@@ -59,6 +62,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <span className="tool-label">{tool.label}</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Templates Section */}
+      <div className="toolbar-section">
+        <h3 className="toolbar-title">Templates</h3>
+        <div className="toolbar-actions">
+          <Templates onApplyTemplate={onApplyTemplate || (() => {})} />
         </div>
       </div>
 

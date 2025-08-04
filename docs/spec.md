@@ -184,12 +184,12 @@ Example HTML export:
 - **Comprehensive Styling**: Border radius, opacity, shadows ✅
 - **Typography**: Font family, size, weight, color, alignment options ✅
 
-### Phase 3: Layout & Hierarchy (Weeks 5-6) 🔄 **IN PROGRESS**
+### Phase 3: Layout & Hierarchy (Weeks 5-6) ✅ **COMPLETED**
 - **Nesting System**: Drag and drop shapes inside other shapes ✅ **COMPLETED**
 - **Layering**: Z-index management and layer panel ✅ **COMPLETED IN PHASE 2**
 - **Alignment Tools**: Snap to grid, snap to edges, distribution tools ✅ **COMPLETED**
 - **Grouping**: Group/ungroup multiple elements ✅ **COMPLETED**
-- **Templates**: Pre-built layout templates for common UI patterns
+- **Templates**: Pre-built layout templates for common UI patterns ✅ **COMPLETED**
 
 ### Phase 4: File Management & Polish (Weeks 7-8) ✅ **PARTIALLY COMPLETED**
 - **Save/Load System**: JSON file format for diagram persistence ✅ **COMPLETED IN PHASE 2**
@@ -242,14 +242,14 @@ Example HTML export:
 - **Multiple Selection**: Ctrl/Cmd + click for multi-select with visual feedback
 - **Snap Settings**: Configurable grid and edge snapping with toggle controls
 - **Grouping System**: Complete grouping functionality with group creation, ungrouping, and visual group indicators
+- **Templates System**: Pre-built layout templates with categories (Layouts, Navigation, UI Components, Content) and visual previews
 
 ### 🔄 **In Progress / Next Priority**
 
-#### Phase 3 Features:
-- **Nesting System**: Drag and drop shapes inside other shapes ✅ **COMPLETED**
-- **Alignment Tools**: Snap to grid, snap to edges, distribution tools ✅ **COMPLETED**
-- **Grouping**: Group/ungroup multiple elements ✅ **COMPLETED**
-- **Templates**: Pre-built layout templates
+#### Phase 4 Features:
+- **Version History**: Track changes and revert functionality
+- **Performance Optimization**: Canvas rendering improvements
+- **UI Polish**: Refined interface design and user experience
 
 ### 📋 **Future Phases**
 

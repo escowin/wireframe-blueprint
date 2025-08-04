@@ -88,3 +88,20 @@ export type AlignmentAction =
   | 'snap-to-edges'
 
 export type GroupAction = 'group' | 'ungroup' 
+
+export interface Template {
+  id: string
+  name: string
+  description: string
+  category: 'layout' | 'ui' | 'navigation' | 'content'
+  shapes: Shape[]
+  groups: Group[]
+  thumbnail?: string
+}
+
+export interface TemplateCategory {
+  id: string
+  name: string
+  description: string
+  templates: Template[]
+} 

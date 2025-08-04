@@ -2,7 +2,7 @@
 
 A Figma-like web application for quickly creating UI layout diagrams and wireframes for frontend projects. Built with React, TypeScript, and SCSS.
 
-## 🚀 Features (Phase 1 Complete)
+## 🚀 Features (Phase 3 Complete)
 
 ### Core Functionality
 - **Infinite Canvas**: Zoomable and pannable workspace with grid background
@@ -14,6 +14,15 @@ A Figma-like web application for quickly creating UI layout diagrams and wirefra
 - **Export Options**: PNG images and HTML code export
 - **Save & Load**: Save diagrams as JSON files and load them back
 - **Auto-Save**: Automatic backup every 30 seconds with recovery on app restart
+
+### Advanced Layout Features (Phase 3)
+- **Templates System**: Pre-built layout templates for common UI patterns (7 templates across 4 categories)
+- **Nesting System**: Drag and drop shapes inside other shapes to create parent-child relationships
+- **Layering**: Complete z-index management with bring to front/back controls
+- **Alignment Tools**: Snap to grid, snap to edges, align and distribute shapes
+- **Grouping**: Group multiple shapes together for easier manipulation
+- **Multiple Selection**: Select multiple shapes with Ctrl/Cmd + click
+- **Comprehensive Styling**: Border radius, box shadows, typography controls
 
 ### User Interface
 - **Left Toolbar**: Drawing tools, file operations (Save/Load), and export options
