@@ -32,6 +32,21 @@
   }
 }
 
+.canvas-renderer {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  
+  &:hover {
+    cursor: crosshair;
+  }
+}
+
 .canvas-grid {
   opacity: 0.3;
 }

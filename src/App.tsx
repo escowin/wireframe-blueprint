@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import Canvas from './components/Canvas'
+import EnhancedCanvas from './components/EnhancedCanvas'
 import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
 import VersionHistoryComponent from './components/VersionHistory'
+import CanvasDemo from './components/CanvasDemo'
 import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction, VersionHistory } from './types'
 import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds, applyTemplate } from './utils/helpers'
 import { initializeVersionHistory, addVersionEntry, undoVersion, redoVersion, loadVersionHistory, saveVersionHistory, hasCanvasStateChanged, getChangeSummary } from './utils/versionHistory'
@@ -36,6 +37,7 @@ function App() {
   })
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [lastCanvasState, setLastCanvasState] = useState<CanvasState | null>(null)
+  const [showDemo, setShowDemo] = useState(false)
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -402,35 +404,71 @@ function App() {
 
   return (
     <div className="app">
-      <Toolbar 
-        currentTool={currentTool}
-        onToolChange={handleToolChange}
-        onExportPNG={handleExportPNG}
-        onExportHTML={handleExportHTML}
-        onSave={handleSave}
-        onLoad={handleLoad}
-        showCssLabels={canvasState.showCssLabels}
-        onToggleCssLabels={handleToggleCssLabels}
-        selectedShape={selectedShape}
-        onLayerAction={handleLayerAction}
-        selectedShapeIds={canvasState.selectedShapeIds}
-        onAlignmentAction={handleAlignmentAction}
-        onGroupAction={handleGroupAction}
-        canvasState={canvasState}
-        onCanvasUpdate={handleCanvasUpdate}
-        onApplyTemplate={handleApplyTemplate}
-        onShowVersionHistory={handleShowVersionHistory}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        versionHistory={versionHistory}
-      />
+      <div style={{ 
+        position: 'fixed', 
+        top: '10px', 
+        right: '10px', 
+        zIndex: 1001,
+        display: 'flex',
+        gap: '10px'
+      }}>
+        <button
+          onClick={() => setShowDemo(!showDemo)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: showDemo ? '#ef4444' : '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          {showDemo ? 'Hide Demo' : 'Show Canvas Demo'}
+        </button>
+      </div>
+      
+      {showDemo ? (
+        <CanvasDemo />
+      ) : (
+        <>
+          <Toolbar 
+            currentTool={currentTool}
+            onToolChange={handleToolChange}
+            onExportPNG={handleExportPNG}
+            onExportHTML={handleExportHTML}
+            onSave={handleSave}
+            onLoad={handleLoad}
+            showCssLabels={canvasState.showCssLabels}
+            onToggleCssLabels={handleToggleCssLabels}
+            selectedShape={selectedShape}
+            onLayerAction={handleLayerAction}
+            selectedShapeIds={canvasState.selectedShapeIds}
+            onAlignmentAction={handleAlignmentAction}
+            onGroupAction={handleGroupAction}
+            canvasState={canvasState}
+            onCanvasUpdate={handleCanvasUpdate}
+            onApplyTemplate={handleApplyTemplate}
+            onShowVersionHistory={handleShowVersionHistory}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            versionHistory={versionHistory}
+          />
       <div className="app-main">
-        <Canvas 
+        <EnhancedCanvas 
           ref={canvasRef}
           canvasState={canvasState}
           setCanvasState={setCanvasState}
           currentTool={currentTool}
           onSelectionChange={handleSelectionChange}
+        />
+        <PropertiesPanel 
+          selectedShape={selectedShape}
+          onShapeUpdate={handleShapeUpdate}
+          onShapesUpdate={handleShapesUpdate}
+          canvasState={canvasState}
+          onCanvasUpdate={handleCanvasUpdate}
         />
         <PropertiesPanel 
           selectedShape={selectedShape}
@@ -470,6 +508,8 @@ function App() {
             </div>
           )}
         </div>
+      )}
+        </>
       )}
     </div>
   )
