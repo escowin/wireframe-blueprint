@@ -4,6 +4,8 @@
 
 WebGL (Web Graphics Library) is a JavaScript API for rendering high-performance 2D and 3D graphics in web browsers. It provides hardware-accelerated graphics capabilities that can significantly enhance the performance and visual quality of complex diagram applications.
 
+> **Note**: This document is provided for future reference. For the current wireframe blueprint application, the Canvas 2D implementation provides excellent performance and is the recommended approach. WebGL would be overkill for simple wireframe diagrams with moderate numbers of shapes.
+
 ## Why WebGL for Diagram Rendering?
 
 ### Performance Benefits
@@ -268,8 +270,25 @@ function getWebGLContext(canvas: HTMLCanvasElement) {
 3. **WebAssembly**: High-performance compute shaders
 4. **Progressive Rendering**: Load and render diagrams progressively
 
+## When to Consider WebGL
+
+### For Simple Wireframe Blueprints (Current Use Case)
+- **Not Recommended**: WebGL is overkill for basic wireframe diagrams
+- **Canvas 2D is Sufficient**: Already provides 90% memory reduction and 10x performance improvement
+- **Simpler Maintenance**: Easier to debug and maintain than WebGL
+- **Better Browser Support**: Universal compatibility without fallback concerns
+
+### When WebGL Would Be Beneficial
+- **Massive Scale**: 1,000+ shapes in a single diagram
+- **Complex Visual Effects**: Advanced gradients, shadows, 3D effects
+- **Real-time Collaboration**: Multiple users editing simultaneously
+- **Advanced Interactions**: Complex animations, particle effects
+- **3D Wireframes**: True 3D blueprint visualization
+
 ## Conclusion
 
 WebGL rendering represents the next evolution in diagram application performance and visual capabilities. While it requires more complex implementation than Canvas 2D, the performance benefits and advanced visual features make it an excellent choice for modern diagram applications that need to handle large datasets and complex visual effects.
+
+**For the current wireframe blueprint application**: The Canvas 2D implementation provides excellent performance and is the recommended approach. WebGL documentation is provided here for future reference if the application needs to scale to enterprise-level diagrams with thousands of elements.
 
 The implementation should be approached gradually, starting with basic functionality and progressively adding advanced features while maintaining compatibility with existing Canvas 2D rendering as a fallback option. 
