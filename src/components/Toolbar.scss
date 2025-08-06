@@ -1,4 +1,5 @@
 @use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 @use 'sass:color';
 
 .toolbar {
@@ -17,25 +18,8 @@
 
 .toolbar-section {
   .toolbar-title {
-    font-size: $font-size-sm;
-    font-weight: 600;
-    color: $primary-color;
+    @include text-title;
     margin: 0 0 $spacing-md 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid $border-color;
-    padding-bottom: $spacing-xs;
-    position: relative;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      width: 30px;
-      height: 2px;
-      background: $accent-color;
-    }
   }
 }
 
@@ -114,19 +98,9 @@
   gap: $spacing-md;
   
   .btn {
-    padding: $spacing-md $spacing-lg;
-    border: 1px solid $border-color;
-    border-radius: $border-radius-md;
-    font-size: $font-size-sm;
-    font-weight: 500;
-    font-family: $font-family;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-align: center;
-    display: inline-block;
-    position: relative;
-    overflow: hidden;
+    @include button-base;
     
+    // Custom ripple effect for toolbar buttons
     &::before {
       content: '';
       position: absolute;
@@ -140,74 +114,27 @@
       transition: width 0.3s ease, height 0.3s ease;
     }
     
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: $shadow-md;
-      
-      &::before {
-        width: 300px;
-        height: 300px;
-      }
-    }
-    
-    &:active {
-      transform: translateY(0);
-      box-shadow: $shadow-sm;
+    &:hover::before {
+      width: 300px;
+      height: 300px;
     }
     
     &--primary {
-      background: $primary-color;
-      color: $background-color;
-      border-color: $primary-color;
-      
-      &:hover {
-        background: color.adjust($primary-color, $lightness: -10%);
-        border-color: color.adjust($primary-color, $lightness: -10%);
-      }
+      @include button-primary;
     }
     
     &--secondary {
-      background: $background-color;
-      color: $text-primary;
-      border-color: $border-color;
-      
-      &:hover {
-        background: $surface-color;
-        border-color: $accent-color;
-        color: $primary-color;
-      }
-    }
-    
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-      
-      &:hover {
-        transform: none;
-        box-shadow: none;
-        
-        &::before {
-          width: 0;
-          height: 0;
-        }
-      }
+      @include button-secondary;
     }
   }
 }
 
 .toolbar-help {
   .help-text {
-    font-size: $font-size-xs;
-    color: $text-secondary;
+    @include text-help;
     line-height: 1.6;
     margin: 0;
-    font-style: italic;
     padding: $spacing-sm;
-    background: rgba(96, 165, 250, 0.05);
-    border-radius: $border-radius-sm;
-    border-left: 3px solid $accent-color;
   }
 }
 

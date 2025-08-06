@@ -1,100 +1,54 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
 .auto-save-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  backdrop-filter: blur(2px);
+  @include modal-overlay;
+  z-index: 10000; // Override default z-index for this specific modal
 }
 
 .auto-save-modal {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  @include modal-base;
   max-width: 400px;
   width: 90%;
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .auto-save-modal-header {
-  padding: 20px 24px 0;
+  @include modal-header;
+  padding: $spacing-lg $spacing-xl 0; // Custom padding for this modal
   
   h3 {
     margin: 0;
-    color: #1f2937;
-    font-size: 18px;
+    color: $text-primary; // Use variable instead of hardcoded color
+    font-size: $font-size-lg;
     font-weight: 600;
   }
 }
 
 .auto-save-modal-content {
-  padding: 16px 24px;
+  @include modal-content;
+  padding: $spacing-md $spacing-xl; // Custom padding for this modal
   
   p {
     margin: 0;
-    color: #6b7280;
-    font-size: 14px;
+    color: $text-secondary; // Use variable instead of hardcoded color
+    font-size: $font-size-sm;
     line-height: 1.5;
   }
 }
 
 .auto-save-modal-actions {
-  padding: 0 24px 20px;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+  @include modal-actions;
+  padding: 0 $spacing-xl $spacing-lg; // Custom padding for this modal
 }
 
 .auto-save-modal-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  @include button-base;
   
-  &:hover {
-    transform: translateY(-1px);
+  &.auto-save-modal-btn-primary {
+    @include button-primary;
   }
   
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.auto-save-modal-btn-primary {
-  background-color: #3b82f6;
-  color: white;
-  
-  &:hover {
-    background-color: #2563eb;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  }
-}
-
-.auto-save-modal-btn-secondary {
-  background-color: #f3f4f6;
-  color: #374151;
-  
-  &:hover {
-    background-color: #e5e7eb;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  &.auto-save-modal-btn-secondary {
+    @include button-secondary;
   }
 } 

@@ -1,13 +1,11 @@
 @use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 .canvas-container {
   flex: 1;
   overflow: hidden;
   position: relative;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  @include no-select;
   min-height: 400px; /* Ensure minimum height */
   min-width: 400px; /* Ensure minimum width */
   width: 100%; /* Ensure full width */
@@ -20,10 +18,7 @@
   position: relative;
   overflow: hidden;
   cursor: crosshair;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  @include no-select;
   min-height: 400px; /* Ensure minimum height */
   min-width: 400px; /* Ensure minimum width */
   
@@ -37,10 +32,7 @@
   height: 100%;
   display: block;
   cursor: crosshair;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  @include no-select;
   
   &:hover {
     cursor: crosshair;

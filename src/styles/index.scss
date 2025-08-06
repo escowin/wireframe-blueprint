@@ -1,5 +1,6 @@
 @use 'sass:color';
 @use './variables' as *;
+@use './mixins' as *;
 
 * {
   box-sizing: border-box;
@@ -38,74 +39,109 @@ html, body {
 
 // Utility classes
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-sm $spacing-md;
-  border: 1px solid $border-color;
-  border-radius: $border-radius-md;
-  background-color: $background-color;
-  color: $text-primary;
-  font-size: $font-size-sm;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background-color: $surface-color;
-    border-color: $primary-color;
-  }
-  
-  &:active {
-    transform: translateY(1px);
-  }
+  @include button-secondary;
   
   &--primary {
-    background-color: $primary-color;
-    border-color: $primary-color;
-    color: white;
-    
-    &:hover {
-      background-color: color.adjust($primary-color, $lightness: -10%);
-    }
+    @include button-primary;
   }
   
   &--small {
-    padding: $spacing-xs $spacing-sm;
-    font-size: $font-size-xs;
+    @include button-small;
   }
 }
 
 .panel {
-  background-color: $surface-color;
-  border: 1px solid $border-color;
-  border-radius: $border-radius-md;
-  box-shadow: $shadow-sm;
+  @include panel-base;
 }
 
 .input {
-  width: 100%;
-  padding: $spacing-sm;
-  border: 1px solid $border-color;
-  border-radius: $border-radius-sm;
-  font-size: $font-size-sm;
-  
-  &:focus {
-    outline: none;
-    border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-  }
+  @include input-base;
 }
 
 .select {
-  @extend .input;
+  @include input-base;
   cursor: pointer;
 }
 
 // Prevent text selection utility
 .no-select {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  @include no-select;
+}
+
+// Global animations
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse-valid {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes pulse-invalid {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes preview-valid {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes preview-invalid {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 } 

@@ -50,4 +50,31 @@ $shadow-lg: 0 10px 15px -3px rgba(30, 58, 138, 0.15), 0 4px 6px -4px rgba(30, 58
 $toolbar-height: 60px;
 $properties-panel-width: 300px;
 $canvas-min-width: 800px;
-$canvas-min-height: 600px; 
+$canvas-min-height: 600px;
+
+// Z-index layers
+$z-index-modal: 1000;
+$z-index-overlay: 999;
+$z-index-tooltip: 1001;
+$z-index-resize-handle: 1000;
+
+// Additional spacing
+$spacing-3xl: 4rem;
+$spacing-4xl: 6rem;
+
+// Additional border radius
+$border-radius-2xl: 1.5rem;
+
+// Additional shadows
+$shadow-xl: 0 20px 25px -5px rgba(30, 58, 138, 0.15), 0 10px 10px -5px rgba(30, 58, 138, 0.1);
+$shadow-2xl: 0 25px 50px -12px rgba(30, 58, 138, 0.25);
+
+// Animation durations
+$transition-fast: 0.15s;
+$transition-normal: 0.3s;
+$transition-slow: 0.5s;
+
+// Animation easing
+$ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+$ease-in: cubic-bezier(0.4, 0, 1, 1);
+$ease-in-out: cubic-bezier(0.4, 0, 0.2, 1); 
