@@ -10,7 +10,55 @@
     display: flex;
     flex: 1;
     overflow: hidden;
-    min-height: 400px; /* Ensure minimum height */
-    border: 2px solid orange; /* Debug border */
+    min-height: 400px;
+  }
+}
+
+.canvas-container {
+  flex: 1;
+  min-width: 0; // Allow canvas to shrink
+  overflow: hidden;
+}
+
+.toolbar-panel {
+  // Toolbar panel specific styles
+  .toolbar {
+    width: 100% !important; // Override fixed width
+    height: 100%;
+  }
+}
+
+.properties-panel {
+  // Properties panel specific styles
+  .properties-panel {
+    width: 100% !important; // Override fixed width
+    height: 100%;
+  }
+}
+
+// Panel width indicators
+.panel-width-indicators {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.width-indicator {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: monospace;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 1;
   }
 } 

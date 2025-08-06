@@ -5,6 +5,7 @@ import PropertiesPanel from './components/PropertiesPanel'
 import VersionHistoryComponent from './components/VersionHistory'
 import CanvasDemo from './components/CanvasDemo'
 import AutoSaveModal from './components/AutoSaveModal'
+import ResizablePanel from './components/ResizablePanel'
 import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction, VersionHistory } from './types'
 import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, markAutoSavePrompted, hasAutoSaveBeenPrompted, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds, applyTemplate } from './utils/helpers'
 import { initializeVersionHistory, addVersionEntry, undoVersion, redoVersion, loadVersionHistory, saveVersionHistory, hasCanvasStateChanged, getChangeSummary } from './utils/versionHistory'
@@ -42,6 +43,8 @@ function App() {
   const [autoSavePromptShown, setAutoSavePromptShown] = useState(false)
   const [showAutoSaveModal, setShowAutoSaveModal] = useState(false)
   const [pendingAutoSaveState, setPendingAutoSaveState] = useState<any>(null)
+  const [toolbarWidth, setToolbarWidth] = useState(300)
+  const [propertiesWidth, setPropertiesWidth] = useState(300)
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -452,43 +455,63 @@ function App() {
         <CanvasDemo />
       ) : (
         <>
-          <Toolbar 
+          <ResizablePanel
+            position="left"
+            defaultWidth={300}
+            minWidth={200}
+            maxWidth={500}
+            onWidthChange={setToolbarWidth}
+            className="toolbar-panel"
+          >
+            <Toolbar 
+              currentTool={currentTool}
+              onToolChange={handleToolChange}
+              onExportPNG={handleExportPNG}
+              onExportHTML={handleExportHTML}
+              onSave={handleSave}
+              onLoad={handleLoad}
+              showCssLabels={canvasState.showCssLabels}
+              onToggleCssLabels={handleToggleCssLabels}
+              selectedShape={selectedShape}
+              onLayerAction={handleLayerAction}
+              selectedShapeIds={canvasState.selectedShapeIds}
+              onAlignmentAction={handleAlignmentAction}
+              onGroupAction={handleGroupAction}
+              canvasState={canvasState}
+              onCanvasUpdate={handleCanvasUpdate}
+              onApplyTemplate={handleApplyTemplate}
+              onShowVersionHistory={handleShowVersionHistory}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              versionHistory={versionHistory}
+            />
+          </ResizablePanel>
+      <div className="app-main">
+        <div className="canvas-container">
+          <EnhancedCanvas 
+            ref={canvasRef}
+            canvasState={canvasState}
+            setCanvasState={setCanvasState}
             currentTool={currentTool}
-            onToolChange={handleToolChange}
-            onExportPNG={handleExportPNG}
-            onExportHTML={handleExportHTML}
-            onSave={handleSave}
-            onLoad={handleLoad}
-            showCssLabels={canvasState.showCssLabels}
-            onToggleCssLabels={handleToggleCssLabels}
+            onSelectionChange={handleSelectionChange}
+          />
+        </div>
+        <ResizablePanel
+          position="right"
+          defaultWidth={300}
+          minWidth={200}
+          maxWidth={500}
+          onWidthChange={setPropertiesWidth}
+          className="properties-panel"
+        >
+          <PropertiesPanel 
             selectedShape={selectedShape}
-            onLayerAction={handleLayerAction}
-            selectedShapeIds={canvasState.selectedShapeIds}
-            onAlignmentAction={handleAlignmentAction}
-            onGroupAction={handleGroupAction}
+            onShapeUpdate={handleShapeUpdate}
+            onShapesUpdate={handleShapesUpdate}
             canvasState={canvasState}
             onCanvasUpdate={handleCanvasUpdate}
-            onApplyTemplate={handleApplyTemplate}
-            onShowVersionHistory={handleShowVersionHistory}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            versionHistory={versionHistory}
           />
-      <div className="app-main">
-        <EnhancedCanvas 
-          ref={canvasRef}
-          canvasState={canvasState}
-          setCanvasState={setCanvasState}
-          currentTool={currentTool}
-          onSelectionChange={handleSelectionChange}
-        />
-        <PropertiesPanel 
-          selectedShape={selectedShape}
-          onShapeUpdate={handleShapeUpdate}
-          onShapesUpdate={handleShapesUpdate}
-          canvasState={canvasState}
-          onCanvasUpdate={handleCanvasUpdate}
-        />
+        </ResizablePanel>
       </div>
       
       {/* Version History Modal */}
@@ -528,6 +551,16 @@ function App() {
           )}
         </div>
       )}
+      
+      {/* Panel Width Indicators */}
+      <div className="panel-width-indicators">
+        <div className="width-indicator">
+          <span>Toolbar: {toolbarWidth}px</span>
+        </div>
+        <div className="width-indicator">
+          <span>Properties: {propertiesWidth}px</span>
+        </div>
+      </div>
         </>
       )}
     </div>

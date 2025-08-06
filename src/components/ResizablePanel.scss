@@ -1,0 +1,122 @@
+@use '../styles/variables' as *;
+
+.resizable-panel {
+  position: relative;
+  height: 100%;
+  flex-shrink: 0;
+  transition: width 0.1s ease-out;
+  
+  // Prevent text selection during resize
+  &.resizing {
+    user-select: none;
+    * {
+      user-select: none;
+    }
+  }
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background-color 0.2s ease;
+  
+  // Visual indicator on hover
+  &:hover {
+    background: rgba($primary-color, 0.1);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 20px;
+      background: $primary-color;
+      border-radius: 1px;
+    }
+  }
+  
+  // Active state during resize
+  &:active {
+    background: rgba($primary-color, 0.2);
+    
+    &::before {
+      background: $primary-color;
+      height: 30px;
+    }
+  }
+  
+  // Position the handle on the correct side
+  &--left {
+    right: -3px;
+  }
+  
+  &--right {
+    left: -3px;
+  }
+  
+  // Add a subtle border when hovering
+  &:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: $primary-color;
+    
+    .resize-handle--left & {
+      right: 0;
+    }
+    
+    .resize-handle--right & {
+      left: 0;
+    }
+  }
+}
+
+// Global cursor styles during resize
+body.resizing {
+  cursor: col-resize !important;
+  user-select: none;
+  
+  * {
+    cursor: col-resize !important;
+    user-select: none;
+  }
+}
+
+// Smooth transitions for panel content
+.resizable-panel > * {
+  transition: width 0.1s ease-out;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .resize-handle {
+    width: 8px; // Larger touch target on mobile
+    
+    &:hover::before {
+      width: 3px;
+      height: 24px;
+    }
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .resize-handle {
+    &:hover {
+      background: rgba($primary-color, 0.15);
+    }
+    
+    &:active {
+      background: rgba($primary-color, 0.25);
+    }
+  }
+} 

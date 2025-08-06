@@ -2,7 +2,7 @@
 @use 'sass:color';
 
 .properties-panel {
-  width: $properties-panel-width;
+  width: 100%;
   height: 100%;
   background-color: $surface-color;
   border-left: 1px solid $border-color;
