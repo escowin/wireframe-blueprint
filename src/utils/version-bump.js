@@ -3,21 +3,24 @@
 /**
  * Version Bump Script
  * 
- * Automatically increments the version in package.json when making significant git commits.
+ * Automatically increments the version in package.json and handles the complete git workflow.
  * 
  * Usage:
- *   node src/utils/version-bump.js [patch|minor|major]
+ *   node src/utils/version-bump.js [patch|minor|major] [--no-tag] [--no-push]
  *   
  * Examples:
- *   node src/utils/version-bump.js patch    # 1.0.0 -> 1.0.1
- *   node src/utils/version-bump.js minor    # 1.0.0 -> 1.1.0
- *   node src/utils/version-bump.js major    # 1.0.0 -> 2.0.0
+ *   node src/utils/version-bump.js patch    # 1.0.0 -> 1.0.1 (with tag and push)
+ *   node src/utils/version-bump.js minor    # 1.0.0 -> 1.1.0 (with tag and push)
+ *   node src/utils/version-bump.js major    # 1.0.0 -> 2.0.0 (with tag and push)
+ *   node src/utils/version-bump.js patch --no-tag    # Bump without creating tag
+ *   node src/utils/version-bump.js patch --no-push   # Bump and tag without pushing
  *   
  * If no argument is provided, defaults to 'patch'
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // ANSI color codes for console output
 const colors = {
@@ -49,6 +52,28 @@ function logInfo(message) {
 
 function logWarning(message) {
   log(`⚠️  ${message}`, 'yellow');
+}
+
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const options = {
+    bumpType: 'patch',
+    createTag: true,
+    pushTag: true
+  };
+  
+  for (const arg of args) {
+    if (['patch', 'minor', 'major'].includes(arg.toLowerCase())) {
+      options.bumpType = arg.toLowerCase();
+    } else if (arg === '--no-tag') {
+      options.createTag = false;
+    } else if (arg === '--no-push') {
+      options.pushTag = false;
+    }
+  }
+  
+  return options;
 }
 
 // Parse version string into components
@@ -111,7 +136,6 @@ function writePackageJson(packageData) {
 // Check if git repository is clean
 function isGitClean() {
   try {
-    const { execSync } = require('child_process');
     const status = execSync('git status --porcelain', { encoding: 'utf8' });
     return status.trim() === '';
   } catch (error) {
@@ -123,7 +147,6 @@ function isGitClean() {
 // Get current git branch
 function getCurrentBranch() {
   try {
-    const { execSync } = require('child_process');
     return execSync('git branch --show-current', { encoding: 'utf8' }).trim();
   } catch (error) {
     logWarning('Could not get current git branch.');
@@ -134,11 +157,45 @@ function getCurrentBranch() {
 // Get last commit message
 function getLastCommitMessage() {
   try {
-    const { execSync } = require('child_process');
     return execSync('git log -1 --pretty=%B', { encoding: 'utf8' }).trim();
   } catch (error) {
     logWarning('Could not get last commit message.');
     return '';
+  }
+}
+
+// Execute git command with error handling
+function execGitCommand(command, description) {
+  try {
+    const result = execSync(command, { encoding: 'utf8' });
+    logSuccess(`${description} completed`);
+    return result.trim();
+  } catch (error) {
+    logError(`${description} failed: ${error.message}`);
+    throw error;
+  }
+}
+
+// Perform git operations
+function performGitOperations(newVersion, options) {
+  log('\n🔧 Performing Git Operations:', 'bright');
+  
+  // Add package.json to staging
+  execGitCommand('git add package.json', 'Adding package.json to staging');
+  
+  // Commit the version bump
+  const commitMessage = `chore: bump version to ${newVersion}`;
+  execGitCommand(`git commit -m "${commitMessage}"`, 'Committing version bump');
+  
+  // Create tag if requested
+  if (options.createTag) {
+    const tagName = `v${newVersion}`;
+    execGitCommand(`git tag ${tagName}`, `Creating tag ${tagName}`);
+    
+    // Push tag if requested
+    if (options.pushTag) {
+      execGitCommand(`git push origin ${tagName}`, `Pushing tag ${tagName} to remote`);
+    }
   }
 }
 
@@ -147,12 +204,12 @@ function main() {
   log('🚀 Version Bump Script', 'bright');
   log('=====================\n', 'bright');
   
-  // Get bump type from command line arguments
-  const bumpType = process.argv[2] || 'patch';
+  // Parse command line arguments
+  const options = parseArgs();
   
   // Validate bump type
-  if (!['patch', 'minor', 'major'].includes(bumpType.toLowerCase())) {
-    logError(`Invalid bump type: ${bumpType}`);
+  if (!['patch', 'minor', 'major'].includes(options.bumpType)) {
+    logError(`Invalid bump type: ${options.bumpType}`);
     logInfo('Valid types: patch, minor, major');
     process.exit(1);
   }
@@ -180,49 +237,57 @@ function main() {
   }
   
   function performBump() {
-    // Read current package.json
-    const packageData = readPackageJson();
-    const currentVersion = packageData.version;
-    
-    logInfo(`Current version: ${currentVersion}`);
-    logInfo(`Bump type: ${bumpType}`);
-    logInfo(`Current branch: ${getCurrentBranch()}`);
-    
-    // Get last commit info
-    const lastCommit = getLastCommitMessage();
-    if (lastCommit) {
-      logInfo(`Last commit: ${lastCommit.substring(0, 60)}${lastCommit.length > 60 ? '...' : ''}`);
+    try {
+      // Read current package.json
+      const packageData = readPackageJson();
+      const currentVersion = packageData.version;
+      
+      logInfo(`Current version: ${currentVersion}`);
+      logInfo(`Bump type: ${options.bumpType}`);
+      logInfo(`Current branch: ${getCurrentBranch()}`);
+      logInfo(`Create tag: ${options.createTag ? 'Yes' : 'No'}`);
+      logInfo(`Push tag: ${options.pushTag ? 'Yes' : 'No'}`);
+      
+      // Get last commit info
+      const lastCommit = getLastCommitMessage();
+      if (lastCommit) {
+        logInfo(`Last commit: ${lastCommit.substring(0, 60)}${lastCommit.length > 60 ? '...' : ''}`);
+      }
+      
+      // Calculate new version
+      const newVersion = incrementVersion(currentVersion, options.bumpType);
+      
+      logInfo(`New version: ${newVersion}`);
+      
+      // Update package.json
+      packageData.version = newVersion;
+      writePackageJson(packageData);
+      
+      logSuccess(`Version bumped from ${currentVersion} to ${newVersion}`);
+      
+      // Perform git operations
+      performGitOperations(newVersion, options);
+      
+      // Show final summary
+      log('\n📊 Version Bump Summary:', 'bright');
+      log(`   Previous: ${currentVersion}`);
+      log(`   Current:  ${newVersion}`);
+      log(`   Type:     ${options.bumpType}`);
+      log(`   Branch:   ${getCurrentBranch()}`);
+      log(`   Tag:      ${options.createTag ? `v${newVersion}` : 'None'}`);
+      log(`   Pushed:   ${options.pushTag ? 'Yes' : 'No'}`);
+      
+      log('\n✨ Version bump and git operations completed successfully!', 'green');
+      
+      if (options.createTag && !options.pushTag) {
+        log('\n💡 To push the tag later, run:', 'cyan');
+        log(`   git push origin v${newVersion}`, 'cyan');
+      }
+      
+    } catch (error) {
+      logError(`Version bump failed: ${error.message}`);
+      process.exit(1);
     }
-    
-    // Calculate new version
-    const newVersion = incrementVersion(currentVersion, bumpType);
-    
-    logInfo(`New version: ${newVersion}`);
-    
-    // Update package.json
-    packageData.version = newVersion;
-    writePackageJson(packageData);
-    
-    logSuccess(`Version bumped from ${currentVersion} to ${newVersion}`);
-    
-    // Show next steps
-    log('\n📋 Next Steps:', 'bright');
-    log('1. Review the changes to package.json');
-    log('2. Commit the version bump:');
-    log(`   git add package.json`);
-    log(`   git commit -m "chore: bump version to ${newVersion}"`);
-    log('3. Tag the release (optional):');
-    log(`   git tag v${newVersion}`);
-    log(`   git push origin v${newVersion}`);
-    
-    // Show version bump summary
-    log('\n📊 Version Bump Summary:', 'bright');
-    log(`   Previous: ${currentVersion}`);
-    log(`   Current:  ${newVersion}`);
-    log(`   Type:     ${bumpType}`);
-    log(`   Branch:   ${getCurrentBranch()}`);
-    
-    log('\n✨ Version bump completed successfully!', 'green');
   }
 }
 
@@ -235,5 +300,6 @@ module.exports = {
   incrementVersion,
   parseVersion,
   readPackageJson,
-  writePackageJson
+  writePackageJson,
+  parseArgs
 }; 
