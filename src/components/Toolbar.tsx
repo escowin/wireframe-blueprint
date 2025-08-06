@@ -370,7 +370,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="toolbar-help">
           <p className="help-text">
             <strong>Mouse Wheel:</strong> Zoom in/out<br />
-            <strong>Middle Mouse:</strong> Pan canvas<br />
+            <strong>Shift + Left Mouse:</strong> Pan canvas<br />
             <strong>Click & Drag:</strong> Draw shapes
           </p>
         </div>

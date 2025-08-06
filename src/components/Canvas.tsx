@@ -387,6 +387,7 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }
 
     // Only handle left mouse button for drawing and selection
+    // Right mouse button is handled by panning
     if (e.button !== 0) {
       return
     }
@@ -829,12 +830,13 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     }))
   }, [canvasState.zoom, setCanvasState])
 
-  // Handle pan with middle mouse button
+  // Handle pan with Shift + Left Mouse Button
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState<Point | null>(null)
 
   const handleMouseDownPan = useCallback((e: React.MouseEvent) => {
-    if (e.button === 1) { // Middle mouse button
+    // Shift + Left mouse button for panning
+    if (e.button === 0 && e.shiftKey) {
       e.preventDefault()
       setIsPanning(true)
       setPanStart({ x: e.clientX, y: e.clientY })
@@ -1173,7 +1175,8 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
             minHeight: '400px', 
             minWidth: '400px',
             position: 'relative',
-            zIndex: 1
+            zIndex: 1,
+            cursor: isPanning ? 'grabbing' : 'default'
           }}
           onMouseDown={(e) => {
             handleMouseDown(e)
