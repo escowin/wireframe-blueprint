@@ -4,43 +4,49 @@
 .properties-panel {
   width: 100%;
   height: 100%;
-  background-color: $surface-color;
+  background: $background-color;
   display: flex;
   flex-direction: column;
+  font-family: $font-family;
+  box-shadow: inset -2px 0 4px rgba(30, 58, 138, 0.05);
 }
 
 .properties-header {
-  padding: $spacing-md;
-  border-bottom: 1px solid $border-color;
+  padding: $spacing-lg;
+  border-bottom: 2px solid $border-color;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: rgba(96, 165, 250, 0.05);
   
   h3 {
     margin: 0;
     font-size: $font-size-lg;
     font-weight: 600;
-    color: $text-primary;
+    color: $primary-color;
+    letter-spacing: 0.5px;
   }
   
   .shape-type {
     font-size: $font-size-xs;
     color: $text-secondary;
     text-transform: uppercase;
-    font-weight: 500;
-    background-color: $background-color;
-    padding: 2px 8px;
-    border-radius: $border-radius-sm;
+    font-weight: 600;
+    background: $accent-color;
+    color: $background-color;
+    padding: 4px 12px;
+    border-radius: $border-radius-md;
+    letter-spacing: 0.5px;
   }
 }
 
 .properties-content {
   flex: 1;
-  padding: $spacing-md;
+  padding: $spacing-lg;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: $spacing-lg;
+  gap: $spacing-xl;
 }
 
 .properties-empty {
@@ -53,34 +59,52 @@
     color: $text-secondary;
     font-size: $font-size-sm;
     text-align: center;
+    font-style: italic;
+    padding: $spacing-lg;
+    background: rgba(96, 165, 250, 0.05);
+    border-radius: $border-radius-md;
+    border: 1px solid $border-color;
   }
 }
 
 .property-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: $background-color;
+  border-radius: $border-radius-md;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-sm;
 }
 
 .property-label {
   font-size: $font-size-sm;
-  font-weight: 500;
-  color: $text-primary;
+  font-weight: 600;
+  color: $primary-color;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid $border-color;
+  padding-bottom: $spacing-xs;
 }
 
 .property-help {
   font-size: $font-size-xs;
   color: $text-secondary;
   font-style: italic;
-  margin-top: 2px;
-  line-height: 1.3;
+  margin-top: $spacing-xs;
+  line-height: 1.4;
+  padding: $spacing-xs;
+  background: rgba(96, 165, 250, 0.05);
+  border-radius: $border-radius-sm;
+  border-left: 3px solid $accent-color;
 }
 
 .color-input {
-  height: 40px;
-  padding: $spacing-xs;
-  border: 1px solid $border-color;
-  border-radius: $border-radius-sm;
+  height: 44px;
+  padding: $spacing-sm;
+  border: 2px solid $border-color;
+  border-radius: $border-radius-md;
   cursor: pointer;
   background-image: 
     linear-gradient(45deg, #ccc 25%, transparent 25%), 
@@ -89,32 +113,64 @@
     linear-gradient(-45deg, transparent 75%, #ccc 75%);
   background-size: 8px 8px;
   background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: $accent-color;
+    box-shadow: $shadow-sm;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+  }
 }
 
 .range-input {
   width: 100%;
-  height: 6px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 4px;
   background: $border-color;
   outline: none;
   cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: $accent-color;
+  }
   
   &::-webkit-slider-thumb {
     appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: $primary-color;
     cursor: pointer;
+    border: 2px solid $background-color;
+    box-shadow: $shadow-sm;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: $shadow-md;
+    }
   }
   
   &::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: $primary-color;
     cursor: pointer;
-    border: none;
+    border: 2px solid $background-color;
+    box-shadow: $shadow-sm;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: $shadow-md;
+    }
   }
 }
 
@@ -122,22 +178,27 @@
   font-size: $font-size-xs;
   color: $text-secondary;
   text-align: center;
+  font-weight: 600;
+  padding: $spacing-xs;
+  background: rgba(96, 165, 250, 0.05);
+  border-radius: $border-radius-sm;
+  border: 1px solid $border-color;
 }
 
 .opacity-control {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: $spacing-md;
   
   .range-input {
     flex: 1;
   }
   
   .opacity-preview {
-    width: 24px;
-    height: 24px;
-    border: 1px solid $border-color;
-    border-radius: $border-radius-sm;
+    width: 32px;
+    height: 32px;
+    border: 2px solid $border-color;
+    border-radius: $border-radius-md;
     background-image: 
       linear-gradient(45deg, #ccc 25%, transparent 25%), 
       linear-gradient(-45deg, #ccc 25%, transparent 25%), 
@@ -145,6 +206,12 @@
       linear-gradient(-45deg, transparent 75%, #ccc 75%);
     background-size: 4px 4px;
     background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      border-color: $accent-color;
+      box-shadow: $shadow-sm;
+    }
   }
 }
 
@@ -152,24 +219,40 @@
 .size-inputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-sm;
+  gap: $spacing-md;
 }
 
 .position-input,
 .size-input {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
   
   label {
     font-size: $font-size-xs;
     color: $text-secondary;
-    font-weight: 500;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   .input {
     font-size: $font-size-xs;
-    padding: $spacing-xs;
+    padding: $spacing-sm;
+    border: 2px solid $border-color;
+    border-radius: $border-radius-md;
+    background: $background-color;
+    transition: all 0.3s ease;
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+    
+    &:hover {
+      border-color: $accent-color;
+    }
   }
 }
 
@@ -177,12 +260,13 @@
 .layer-info {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
-  margin-bottom: $spacing-sm;
-  padding: $spacing-sm;
-  background-color: $background-color;
-  border-radius: $border-radius-sm;
-  border: 1px solid $border-color;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  background: $background-color;
+  border-radius: $border-radius-md;
+  border: 2px solid $border-color;
+  box-shadow: $shadow-sm;
   
   .layer-position,
   .layer-count {
@@ -193,15 +277,18 @@
     .layer-label {
       font-size: $font-size-xs;
       color: $text-secondary;
-      font-weight: 500;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .layer-value {
       font-size: $font-size-xs;
-      color: $text-primary;
-      font-weight: 600;
-      background-color: $surface-color;
-      padding: 2px 6px;
+      color: $primary-color;
+      font-weight: 700;
+      background: $accent-color;
+      color: $background-color;
+      padding: 4px 8px;
       border-radius: $border-radius-sm;
       border: 1px solid $border-color;
     }
@@ -211,65 +298,73 @@
 .layer-controls {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
-  margin-bottom: $spacing-sm;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
   
   .layer-row {
     display: flex;
-    gap: $spacing-xs;
+    gap: $spacing-sm;
     
     .layer-btn {
       flex: 1;
-      padding: $spacing-xs $spacing-sm;
-      border: 1px solid $border-color;
-      border-radius: $border-radius-sm;
-      background-color: $surface-color;
+      padding: $spacing-sm $spacing-md;
+      border: 2px solid $border-color;
+      border-radius: $border-radius-md;
+      background: $background-color;
       color: $text-primary;
       font-size: $font-size-xs;
-      font-weight: 500;
+      font-weight: 600;
+      font-family: $font-family;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 32px;
+      min-height: 36px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
       
       &:hover:not(:disabled) {
-        background-color: $primary-color;
-        color: white;
+        background: $primary-color;
+        color: $background-color;
         border-color: $primary-color;
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
       }
       
       &:active:not(:disabled) {
-        transform: translateY(1px);
+        transform: translateY(0);
+        box-shadow: $shadow-sm;
       }
       
       &:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
-        background-color: $background-color;
+        background: $surface-color;
         color: $text-secondary;
+        transform: none;
+        box-shadow: none;
       }
       
       &.layer-btn-primary {
-        background-color: $primary-color;
-        color: white;
+        background: $primary-color;
+        color: $background-color;
         border-color: $primary-color;
         
         &:hover:not(:disabled) {
-          background-color: color.adjust($primary-color, $lightness: -10%);
+          background: color.adjust($primary-color, $lightness: -10%);
           border-color: color.adjust($primary-color, $lightness: -10%);
         }
       }
       
       &.layer-btn-secondary {
-        background-color: $surface-color;
+        background: $background-color;
         color: $text-primary;
         border-color: $border-color;
         
         &:hover:not(:disabled) {
-          background-color: $primary-color;
-          color: white;
+          background: $primary-color;
+          color: $background-color;
           border-color: $primary-color;
         }
       }
@@ -280,27 +375,34 @@
 .z-index-control {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
   
   .z-index-label {
     font-size: $font-size-xs;
     color: $text-secondary;
-    font-weight: 500;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   .z-index-input {
     font-size: $font-size-xs;
-    padding: $spacing-xs;
+    padding: $spacing-sm;
     text-align: center;
-    font-weight: 600;
-    background-color: $background-color;
-    border: 1px solid $border-color;
-    border-radius: $border-radius-sm;
+    font-weight: 700;
+    background: $background-color;
+    border: 2px solid $border-color;
+    border-radius: $border-radius-md;
+    color: $primary-color;
     
     &:focus {
       border-color: $primary-color;
       outline: none;
-      box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+    
+    &:hover {
+      border-color: $accent-color;
     }
   }
 }
@@ -309,40 +411,46 @@
 .shadow-controls {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: $spacing-md;
   
   .shadow-toggle {
     display: flex;
     align-items: center;
-    gap: $spacing-xs;
+    gap: $spacing-sm;
     
     input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       accent-color: $primary-color;
+      cursor: pointer;
     }
     
     label {
       font-size: $font-size-sm;
-      color: $text-primary;
-      font-weight: 500;
+      color: $primary-color;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
     }
   }
   
   .shadow-inputs {
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
+    gap: $spacing-md;
     
     .shadow-input {
       display: flex;
       flex-direction: column;
-      gap: $spacing-xs;
+      gap: $spacing-sm;
       
       label {
         font-size: $font-size-xs;
         color: $text-secondary;
-        font-weight: 500;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
       
       .range-input {
@@ -353,7 +461,7 @@
         font-size: $font-size-xs;
         color: $text-secondary;
         text-align: center;
-        font-weight: 600;
+        font-weight: 700;
       }
     }
   }
@@ -361,25 +469,31 @@
   .shadow-color {
     display: flex;
     flex-direction: column;
-    gap: $spacing-xs;
+    gap: $spacing-sm;
     
     label {
       font-size: $font-size-xs;
       color: $text-secondary;
-      font-weight: 500;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .color-input {
       width: 100%;
-      height: 32px;
-      border: 1px solid $border-color;
-      border-radius: $border-radius-sm;
+      height: 36px;
+      border: 2px solid $border-color;
+      border-radius: $border-radius-md;
       cursor: pointer;
       
       &:focus {
         border-color: $primary-color;
         outline: none;
-        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+      }
+      
+      &:hover {
+        border-color: $accent-color;
       }
     }
   }
@@ -389,32 +503,41 @@
 .typography-controls {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: $spacing-md;
   
   .typography-input {
     display: flex;
     flex-direction: column;
-    gap: $spacing-xs;
+    gap: $spacing-sm;
     
     label {
       font-size: $font-size-xs;
       color: $text-secondary;
-      font-weight: 500;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .select {
       width: 100%;
-      padding: $spacing-xs;
-      border: 1px solid $border-color;
-      border-radius: $border-radius-sm;
-      background-color: $surface-color;
+      padding: $spacing-sm;
+      border: 2px solid $border-color;
+      border-radius: $border-radius-md;
+      background: $background-color;
       color: $text-primary;
       font-size: $font-size-sm;
+      font-family: $font-family;
+      cursor: pointer;
+      transition: all 0.3s ease;
       
       &:focus {
         border-color: $primary-color;
         outline: none;
-        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+      }
+      
+      &:hover {
+        border-color: $accent-color;
       }
     }
     
@@ -426,20 +549,24 @@
       font-size: $font-size-xs;
       color: $text-secondary;
       text-align: center;
-      font-weight: 600;
+      font-weight: 700;
     }
     
     .color-input {
       width: 100%;
-      height: 32px;
-      border: 1px solid $border-color;
-      border-radius: $border-radius-sm;
+      height: 36px;
+      border: 2px solid $border-color;
+      border-radius: $border-radius-md;
       cursor: pointer;
       
       &:focus {
         border-color: $primary-color;
         outline: none;
-        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+      }
+      
+      &:hover {
+        border-color: $accent-color;
       }
     }
   }
@@ -447,45 +574,48 @@
 
 // Nesting Information Styles
 .nesting-info {
-  margin-bottom: 12px;
+  margin-bottom: $spacing-md;
   
   .nesting-parent,
   .nesting-children {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    padding: 6px 8px;
-    background-color: #f8fafc;
-    border-radius: 4px;
-    border: 1px solid #e2e8f0;
+    margin-bottom: $spacing-sm;
+    padding: $spacing-sm;
+    background: $background-color;
+    border-radius: $border-radius-md;
+    border: 2px solid $border-color;
+    box-shadow: $shadow-sm;
     
     .nesting-label {
-      font-weight: 500;
-      color: #475569;
-      font-size: 12px;
+      font-weight: 600;
+      color: $primary-color;
+      font-size: $font-size-xs;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .nesting-value {
-      font-size: 12px;
+      font-size: $font-size-xs;
       
       .has-parent {
-        color: #059669;
-        font-weight: 500;
+        color: $success-color;
+        font-weight: 700;
       }
       
       .no-parent {
-        color: #6b7280;
+        color: $text-secondary;
         font-style: italic;
       }
       
       .has-children {
-        color: #3b82f6;
-        font-weight: 500;
+        color: $primary-color;
+        font-weight: 700;
       }
       
       .no-children {
-        color: #6b7280;
+        color: $text-secondary;
         font-style: italic;
       }
     }
@@ -494,38 +624,53 @@
 
 .nesting-controls {
   .nesting-row {
-    margin-bottom: 12px;
+    margin-bottom: $spacing-md;
     
     .nesting-btn {
       width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-      background-color: #ffffff;
-      color: #374151;
-      font-size: 12px;
-      font-weight: 500;
+      padding: $spacing-sm $spacing-md;
+      border: 2px solid $border-color;
+      border-radius: $border-radius-md;
+      background: $background-color;
+      color: $text-primary;
+      font-size: $font-size-xs;
+      font-weight: 600;
+      font-family: $font-family;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      min-height: 36px;
       
       &:hover:not(:disabled) {
-        background-color: #f3f4f6;
-        border-color: #9ca3af;
+        background: $primary-color;
+        color: $background-color;
+        border-color: $primary-color;
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+      }
+      
+      &:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: $shadow-sm;
       }
       
       &:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
       }
       
       &.nesting-btn-remove {
-        color: #dc2626;
-        border-color: #fecaca;
-        background-color: #fef2f2;
+        color: $error-color;
+        border-color: $error-color;
+        background: rgba(220, 38, 38, 0.05);
         
         &:hover:not(:disabled) {
-          background-color: #fee2e2;
-          border-color: #fca5a5;
+          background: $error-color;
+          color: $background-color;
+          border-color: $error-color;
         }
       }
     }
@@ -534,38 +679,52 @@
   .parent-selection {
     .parent-label {
       display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 6px;
+      font-size: $font-size-xs;
+      font-weight: 600;
+      color: $primary-color;
+      margin-bottom: $spacing-sm;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
-         .parent-select {
-       width: 100%;
-       padding: 6px 8px;
-       border: 1px solid #d1d5db;
-       border-radius: 4px;
-       background-color: #ffffff;
-       font-size: 12px;
-       color: #374151;
-       
-       &:focus {
-         outline: none;
-         border-color: #3b82f6;
-         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-       }
-       
-       option {
-         padding: 4px;
-       }
-     }
-     
-     .parent-help {
-       display: block;
-       margin-top: 4px;
-       font-size: 11px;
-       color: #6b7280;
-       line-height: 1.3;
-     }
-   }
+    .parent-select {
+      width: 100%;
+      padding: $spacing-sm;
+      border: 2px solid $border-color;
+      border-radius: $border-radius-md;
+      background: $background-color;
+      font-size: $font-size-xs;
+      color: $text-primary;
+      font-family: $font-family;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+      }
+      
+      &:hover {
+        border-color: $accent-color;
+      }
+      
+      option {
+        padding: $spacing-xs;
+      }
+    }
+    
+    .parent-help {
+      display: block;
+      margin-top: $spacing-sm;
+      font-size: $font-size-xs;
+      color: $text-secondary;
+      line-height: 1.4;
+      font-style: italic;
+      padding: $spacing-xs;
+      background: rgba(96, 165, 250, 0.05);
+      border-radius: $border-radius-sm;
+      border-left: 3px solid $accent-color;
+    }
+  }
 } 

@@ -616,12 +616,7 @@ function App() {
         </div>
       )}
       
-      {/* Panel Width Indicators */}
-      <div className="panel-width-indicators">
-        <div className="width-indicator">
-          <span>Properties: {propertiesWidth}px</span>
-        </div>
-      </div>
+
         </>
       )}
     </div>

@@ -1,22 +1,31 @@
-// Colors
-$primary-color: #2563eb;
-$secondary-color: #64748b;
-$success-color: #10b981;
-$warning-color: #f59e0b;
-$error-color: #ef4444;
+// Mid-Century Minimalist Color Palette with Mediterranean Blues
+$primary-color: #1e3a8a; // Navy Blue - deep Mediterranean blue
+$secondary-color: #3b82f6; // Blue - medium Mediterranean blue
+$accent-color: #60a5fa; // Sky Blue - light Mediterranean accent
+$success-color: #059669; // Emerald - Mediterranean green
+$warning-color: #d97706; // Amber - warm accent
+$error-color: #dc2626; // Red - muted error color
 
-$background-color: #ffffff;
-$surface-color: #f8fafc;
-$border-color: #e2e8f0;
-$text-primary: #1e293b;
-$text-secondary: #64748b;
+$background-color: #FDF5E6; // Old Lace - warm off-white (keeping as requested)
+$surface-color: #F5F5DC; // Beige - subtle surface color (keeping as requested)
+$border-color: #cbd5e1; // Slate - cool border to complement blues
+$text-primary: #1e293b; // Slate Gray - readable dark text
+$text-secondary: #64748b; // Slate - secondary text
 
-// Dark mode colors
+// Dark mode colors (keeping for compatibility)
 $dark-background: #0f172a;
 $dark-surface: #1e293b;
 $dark-border: #334155;
 $dark-text-primary: #f1f5f9;
 $dark-text-secondary: #94a3b8;
+
+// Mid-Century Typography
+$font-family: 'Helvetica Neue', 'Arial', 'Georgia', serif;
+$font-size-xs: 0.75rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.125rem;
+$font-size-xl: 1.25rem;
 
 // Spacing
 $spacing-xs: 0.25rem;
@@ -26,24 +35,16 @@ $spacing-lg: 1.5rem;
 $spacing-xl: 2rem;
 $spacing-2xl: 3rem;
 
-// Border radius
-$border-radius-sm: 0.25rem;
+// Border radius - more rounded for mid-century feel
+$border-radius-sm: 0.375rem;
 $border-radius-md: 0.5rem;
 $border-radius-lg: 0.75rem;
 $border-radius-xl: 1rem;
 
-// Shadows
-$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-$shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-$shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-
-// Typography
-$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-$font-size-xs: 0.75rem;
-$font-size-sm: 0.875rem;
-$font-size-base: 1rem;
-$font-size-lg: 1.125rem;
-$font-size-xl: 1.25rem;
+// Shadows - subtle and warm with blue tint
+$shadow-sm: 0 1px 3px 0 rgba(30, 58, 138, 0.1);
+$shadow-md: 0 4px 6px -1px rgba(30, 58, 138, 0.15), 0 2px 4px -2px rgba(30, 58, 138, 0.1);
+$shadow-lg: 0 10px 15px -3px rgba(30, 58, 138, 0.15), 0 4px 6px -4px rgba(30, 58, 138, 0.1);
 
 // Layout
 $toolbar-height: 60px;

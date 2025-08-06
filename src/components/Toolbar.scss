@@ -4,106 +4,194 @@
 .toolbar {
   width: $properties-panel-width;
   height: 100%;
-  background-color: $surface-color;
-  border-right: 1px solid $border-color;
-  padding: $spacing-md;
+  background: $background-color;
+  border-right: 2px solid $border-color;
+  padding: $spacing-lg;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: $spacing-lg;
+  gap: $spacing-xl;
+  font-family: $font-family;
+  box-shadow: inset -2px 0 4px rgba(30, 58, 138, 0.05);
 }
 
 .toolbar-section {
   .toolbar-title {
     font-size: $font-size-sm;
     font-weight: 600;
-    color: $text-primary;
-    margin: 0 0 $spacing-sm 0;
+    color: $primary-color;
+    margin: 0 0 $spacing-md 0;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid $border-color;
+    padding-bottom: $spacing-xs;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 30px;
+      height: 2px;
+      background: $accent-color;
+    }
   }
 }
 
 .toolbar-tools {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
 }
 
 .toolbar-tool {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-sm;
+  gap: $spacing-md;
+  padding: $spacing-md;
   border: 1px solid $border-color;
-  border-radius: $border-radius-sm;
-  background-color: $background-color;
+  border-radius: $border-radius-md;
+  background: $background-color;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
   
   &:hover {
-    background-color: $surface-color;
-    border-color: $primary-color;
+    background: $surface-color;
+    border-color: $accent-color;
+    transform: translateX(4px);
+    box-shadow: $shadow-md;
+    
+    &::before {
+      left: 100%;
+    }
   }
   
   &.active {
-    background-color: $primary-color;
+    background: $primary-color;
     border-color: $primary-color;
-    color: white;
+    color: $background-color;
+    box-shadow: $shadow-lg;
+    transform: translateX(4px);
+    
+    .tool-icon {
+      color: $accent-color;
+    }
   }
   
   .tool-icon {
     font-size: $font-size-lg;
-    width: 24px;
+    width: 28px;
     text-align: center;
+    color: $text-primary;
+    transition: color 0.3s ease;
   }
   
   .tool-label {
     font-size: $font-size-sm;
     font-weight: 500;
+    color: inherit;
   }
 }
 
 .toolbar-actions {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: $spacing-md;
   
   .btn {
-    padding: $spacing-sm $spacing-md;
+    padding: $spacing-md $spacing-lg;
     border: 1px solid $border-color;
-    border-radius: $border-radius-sm;
+    border-radius: $border-radius-md;
     font-size: $font-size-sm;
     font-weight: 500;
+    font-family: $font-family;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
     display: inline-block;
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s ease, height 0.3s ease;
+    }
     
     &:hover {
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: $shadow-md;
+      
+      &::before {
+        width: 300px;
+        height: 300px;
+      }
+    }
+    
+    &:active {
+      transform: translateY(0);
       box-shadow: $shadow-sm;
     }
     
     &--primary {
-      background-color: $primary-color;
-      color: white;
+      background: $primary-color;
+      color: $background-color;
       border-color: $primary-color;
       
       &:hover {
-        background-color: color.adjust($primary-color, $lightness: -10%);
+        background: color.adjust($primary-color, $lightness: -10%);
+        border-color: color.adjust($primary-color, $lightness: -10%);
       }
     }
     
     &--secondary {
-      background-color: $background-color;
+      background: $background-color;
       color: $text-primary;
       border-color: $border-color;
       
       &:hover {
-        background-color: $surface-color;
-        border-color: $secondary-color;
+        background: $surface-color;
+        border-color: $accent-color;
+        color: $primary-color;
+      }
+    }
+    
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      
+      &:hover {
+        transform: none;
+        box-shadow: none;
+        
+        &::before {
+          width: 0;
+          height: 0;
+        }
       }
     }
   }
@@ -113,8 +201,13 @@
   .help-text {
     font-size: $font-size-xs;
     color: $text-secondary;
-    line-height: 1.4;
+    line-height: 1.6;
     margin: 0;
+    font-style: italic;
+    padding: $spacing-sm;
+    background: rgba(96, 165, 250, 0.05);
+    border-radius: $border-radius-sm;
+    border-left: 3px solid $accent-color;
   }
 }
 
@@ -122,27 +215,17 @@
 .layer-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
   
   .layer-btn {
-    padding: $spacing-xs $spacing-sm;
+    padding: $spacing-sm $spacing-md;
     font-size: $font-size-xs;
-    min-height: 32px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-      
-      &:hover {
-        transform: none;
-        box-shadow: none;
-      }
-    }
+    font-weight: 600;
+    letter-spacing: 0.5px;
   }
 }
 
@@ -150,33 +233,22 @@
 .alignment-buttons {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
   
   .alignment-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: $spacing-xs;
+    gap: $spacing-sm;
     
     .alignment-btn {
-      padding: $spacing-xs;
+      padding: $spacing-sm;
       font-size: $font-size-sm;
-      min-height: 32px;
+      min-height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-        
-        &:hover {
-          transform: none;
-          box-shadow: none;
-        }
-      }
+      font-family: 'Courier New', monospace;
     }
   }
 }
@@ -185,27 +257,17 @@
 .snap-buttons {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
   
   .snap-btn {
-    padding: $spacing-xs $spacing-sm;
+    padding: $spacing-sm $spacing-md;
     font-size: $font-size-xs;
-    min-height: 32px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-      
-      &:hover {
-        transform: none;
-        box-shadow: none;
-      }
-    }
+    font-weight: 600;
+    letter-spacing: 0.5px;
   }
 }
 
@@ -213,27 +275,17 @@
 .grouping-buttons {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
   
   .grouping-btn {
-    padding: $spacing-xs $spacing-sm;
+    padding: $spacing-sm $spacing-md;
     font-size: $font-size-xs;
-    min-height: 32px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-      
-      &:hover {
-        transform: none;
-        box-shadow: none;
-      }
-    }
+    font-weight: 600;
+    letter-spacing: 0.5px;
   }
 }
 
@@ -241,36 +293,30 @@
 .version-history-buttons {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
   
   .version-btn {
-    padding: $spacing-xs $spacing-sm;
+    padding: $spacing-sm $spacing-md;
     font-size: $font-size-xs;
-    min-height: 32px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-      
-      &:hover {
-        transform: none;
-        box-shadow: none;
-      }
-    }
+    font-weight: 600;
+    letter-spacing: 0.5px;
   }
 }
 
 .version-info {
   text-align: center;
-  margin-top: $spacing-xs;
+  margin-top: $spacing-sm;
+  padding: $spacing-xs;
+  background: rgba(96, 165, 250, 0.05);
+  border-radius: $border-radius-sm;
   
   small {
     color: $text-secondary;
     font-size: $font-size-xs;
+    font-style: italic;
   }
 } 
