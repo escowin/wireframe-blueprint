@@ -600,6 +600,7 @@ export const loadAutoSave = (): any | null => {
     // Validate and ensure all shapes have required properties
     canvasState.shapes = validateAndFixShapes(canvasState.shapes)
     
+    console.log(`Auto-save loaded successfully with ${canvasState.shapes.length} shapes`)
     return canvasState
   } catch (error) {
     console.warn('Failed to load auto-saved diagram:', error)
@@ -610,6 +611,17 @@ export const loadAutoSave = (): any | null => {
 // Clear auto-saved diagram
 export const clearAutoSave = (): void => {
   localStorage.removeItem('diagram-autosave')
+  localStorage.removeItem('diagram-autosave-prompted')
+}
+
+// Mark auto-save prompt as shown for this session
+export const markAutoSavePrompted = (): void => {
+  localStorage.setItem('diagram-autosave-prompted', Date.now().toString())
+}
+
+// Check if auto-save prompt has been shown in this session
+export const hasAutoSaveBeenPrompted = (): boolean => {
+  return localStorage.getItem('diagram-autosave-prompted') !== null
 }
 
 // Validate and ensure all shapes have required properties

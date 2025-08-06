@@ -4,8 +4,9 @@ import Toolbar from './components/Toolbar'
 import PropertiesPanel from './components/PropertiesPanel'
 import VersionHistoryComponent from './components/VersionHistory'
 import CanvasDemo from './components/CanvasDemo'
+import AutoSaveModal from './components/AutoSaveModal'
 import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction, VersionHistory } from './types'
-import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds, applyTemplate } from './utils/helpers'
+import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, markAutoSavePrompted, hasAutoSaveBeenPrompted, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds, applyTemplate } from './utils/helpers'
 import { initializeVersionHistory, addVersionEntry, undoVersion, redoVersion, loadVersionHistory, saveVersionHistory, hasCanvasStateChanged, getChangeSummary } from './utils/versionHistory'
 import './App.scss'
 
@@ -38,19 +39,37 @@ function App() {
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [lastCanvasState, setLastCanvasState] = useState<CanvasState | null>(null)
   const [showDemo, setShowDemo] = useState(false)
+  const [autoSavePromptShown, setAutoSavePromptShown] = useState(false)
+  const [showAutoSaveModal, setShowAutoSaveModal] = useState(false)
+  const [pendingAutoSaveState, setPendingAutoSaveState] = useState<any>(null)
 
   // Load auto-saved diagram on app start
   useEffect(() => {
+    // Prevent showing the prompt multiple times in React StrictMode or if already prompted this session
+    if (autoSavePromptShown || hasAutoSaveBeenPrompted()) return
+    
     const autoSavedState = loadAutoSave()
     if (autoSavedState) {
-      const shouldRestore = window.confirm('Found an auto-saved diagram. Would you like to restore it?')
-      if (shouldRestore) {
-        setCanvasState(migrateCanvasState(autoSavedState))
-      } else {
-        clearAutoSave()
-      }
+      setAutoSavePromptShown(true)
+      markAutoSavePrompted()
+      setPendingAutoSaveState(autoSavedState)
+      setShowAutoSaveModal(true)
     }
-  }, [])
+  }, [autoSavePromptShown])
+
+  const handleAutoSaveRestore = () => {
+    if (pendingAutoSaveState) {
+      setCanvasState(migrateCanvasState(pendingAutoSaveState))
+    }
+    setShowAutoSaveModal(false)
+    setPendingAutoSaveState(null)
+  }
+
+  const handleAutoSaveDiscard = () => {
+    clearAutoSave() // This will also clear the session flag
+    setShowAutoSaveModal(false)
+    setPendingAutoSaveState(null)
+  }
 
   // Check storage usage on mount and after auto-save
   useEffect(() => {
@@ -481,6 +500,13 @@ function App() {
           onClose={handleHideVersionHistory}
         />
       )}
+      
+      {/* Auto-Save Modal */}
+      <AutoSaveModal
+        isOpen={showAutoSaveModal}
+        onRestore={handleAutoSaveRestore}
+        onDiscard={handleAutoSaveDiscard}
+      />
       
       {storageUsage && (
         <div className="storage-indicator" style={{
