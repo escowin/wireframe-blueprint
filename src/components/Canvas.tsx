@@ -835,28 +835,58 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   const [panStart, setPanStart] = useState<Point | null>(null)
 
   const handleMouseDownPan = useCallback((e: React.MouseEvent) => {
+    console.log('🔍 handleMouseDownPan FUNCTION CALLED - this should always appear')
+    console.log('🔍 handleMouseDownPan details:', {
+      button: e.button,
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey,
+      clientX: e.clientX,
+      clientY: e.clientY
+    })
+    
     // Shift + Left mouse button for panning
     if (e.button === 0 && e.shiftKey) {
+      console.log('✅ Panning started - Shift + Left mouse detected')
       e.preventDefault()
       setIsPanning(true)
       setPanStart({ x: e.clientX, y: e.clientY })
+    } else {
+      console.log('❌ Panning not triggered - conditions not met')
     }
   }, [])
 
   // Optimized mouse move pan handler with RAF throttling
   const handleMouseMovePanOptimized = useCallback((e: React.MouseEvent) => {
-    if (!isPanning || !panStart) return
+    if (!isPanning || !panStart) {
+      console.log('🔍 handleMouseMovePan - not panning:', { isPanning, panStart: !!panStart })
+      return
+    }
+
+    console.log('🔄 Panning in progress:', {
+      currentX: e.clientX,
+      currentY: e.clientY,
+      startX: panStart.x,
+      startY: panStart.y,
+      deltaX: e.clientX - panStart.x,
+      deltaY: e.clientY - panStart.y
+    })
 
     const deltaX = e.clientX - panStart.x
     const deltaY = e.clientY - panStart.y
 
-    setCanvasState(prev => ({
-      ...prev,
-      pan: {
+    setCanvasState(prev => {
+      const newPan = {
         x: prev.pan.x + deltaX,
         y: prev.pan.y + deltaY
       }
-    }))
+      console.log('📍 Updating pan position:', { oldPan: prev.pan, newPan })
+      return {
+        ...prev,
+        pan: newPan
+      }
+    })
 
     setPanStart({ x: e.clientX, y: e.clientY })
   }, [isPanning, panStart, setCanvasState])
@@ -864,9 +894,10 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
   const handleMouseMovePan = rafThrottle(handleMouseMovePanOptimized)
 
   const handleMouseUpPan = useCallback(() => {
+    console.log('🛑 Panning stopped:', { wasPanning: isPanning })
     setIsPanning(false)
     setPanStart(null)
-  }, [])
+  }, [isPanning])
 
 
 
@@ -1157,6 +1188,13 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
     )
   }, [nestingMessage, canvasState.selectedShapeId, canvasState.shapes, canvasToScreen])
 
+  // Debug log for pan state
+  console.log('🎨 Canvas render - pan state:', { 
+    canvasPan: canvasState.pan, 
+    isPanning, 
+    panStart 
+  })
+
   return (
     <div 
       className="canvas-container" 
@@ -1176,21 +1214,59 @@ const Canvas = forwardRef<HTMLDivElement, CanvasProps>(({ canvasState, setCanvas
             minWidth: '400px',
             position: 'relative',
             zIndex: 1,
-            cursor: isPanning ? 'grabbing' : 'default'
+            cursor: isPanning ? 'grabbing' : 'default',
+            backgroundColor: 'rgba(255, 0, 0, 0.1)', // Temporary red background to see the canvas area
+            pointerEvents: 'auto' // Force pointer events to work
           }}
           onMouseDown={(e) => {
-            handleMouseDown(e)
+            console.log('🎯 Canvas onMouseDown - EVENT RECEIVED:', { 
+              button: e.button, 
+              shiftKey: e.shiftKey,
+              ctrlKey: e.ctrlKey,
+              altKey: e.altKey,
+              metaKey: e.metaKey,
+              clientX: e.clientX,
+              clientY: e.clientY,
+              target: e.target,
+              currentTarget: e.currentTarget
+            })
+            
+            // Test: Always call pan handler to see if it's being reached
+            console.log('🎯 About to call handleMouseDownPan...')
             handleMouseDownPan(e)
+            console.log('🎯 handleMouseDownPan called successfully')
+            
+            // Only proceed with other mouse down logic if not panning (Shift + Left mouse)
+            if (!(e.button === 0 && e.shiftKey)) {
+              handleMouseDown(e)
+            }
+          }}
+          onMouseEnter={(e) => {
+            console.log('🎯 Canvas onMouseEnter - mouse entered canvas area')
+          }}
+          onMouseLeave={(e) => {
+            console.log('🎯 Canvas onMouseLeave - mouse left canvas area')
           }}
           onMouseMove={(e) => {
-            handleMouseMove(e)
+            console.log('🎯 Canvas onMouseMove:', { isPanning })
+            // Handle panning first
             handleMouseMovePan(e)
+            // Only proceed with other mouse move logic if not panning
+            if (!isPanning) {
+              handleMouseMove(e)
+            }
           }}
           onMouseUp={(e) => {
-            handleMouseUp()
+            console.log('🎯 Canvas onMouseUp')
+            // Handle panning first
             handleMouseUpPan()
+            // Always handle mouse up for cleanup
+            handleMouseUp()
           }}
-          onClick={handleCanvasClick}
+          onClick={(e) => {
+            console.log('🎯 Canvas onClick - EVENT RECEIVED')
+            handleCanvasClick(e)
+          }}
           onWheel={handleWheel}
           onContextMenu={(e) => e.preventDefault()}
           onDragStart={(e) => e.preventDefault()}

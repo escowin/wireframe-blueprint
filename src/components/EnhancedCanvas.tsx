@@ -35,6 +35,10 @@ const EnhancedCanvas = forwardRef<HTMLDivElement, EnhancedCanvasProps>(({
   const [nestingMessage, setNestingMessage] = useState<string | null>(null)
   const [selectionBox, setSelectionBox] = useState<{ start: Point; end: Point } | null>(null)
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 })
+  
+  // Panning state
+  const [isPanning, setIsPanning] = useState(false)
+  const [panStart, setPanStart] = useState<Point | null>(null)
 
   // Virtualization state
   const virtualizationStats = useMemo(() => createVirtualizationStats(), [])
@@ -140,6 +144,29 @@ const EnhancedCanvas = forwardRef<HTMLDivElement, EnhancedCanvasProps>(({
     }
   }, [currentTool, canvasState.selectedShapeIds, screenToCanvas, setCanvasState, onSelectionChange])
 
+  // Handle panning with Shift + Left Mouse Button
+  const handleMouseDownPan = useCallback((e: React.MouseEvent) => {
+    console.log('🔍 EnhancedCanvas handleMouseDownPan called:', {
+      button: e.button,
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey,
+      clientX: e.clientX,
+      clientY: e.clientY
+    })
+    
+    // Shift + Left mouse button for panning
+    if (e.button === 0 && e.shiftKey) {
+      console.log('✅ EnhancedCanvas Panning started - Shift + Left mouse detected')
+      e.preventDefault()
+      setIsPanning(true)
+      setPanStart({ x: e.clientX, y: e.clientY })
+    } else {
+      console.log('❌ EnhancedCanvas Panning not triggered - conditions not met')
+    }
+  }, [])
+
   // Handle mouse move
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!containerRef.current) return
@@ -203,6 +230,35 @@ const EnhancedCanvas = forwardRef<HTMLDivElement, EnhancedCanvasProps>(({
       }))
     }
 
+    // Handle panning
+    if (isPanning && panStart) {
+      console.log('🔄 EnhancedCanvas Panning in progress:', {
+        currentX: e.clientX,
+        currentY: e.clientY,
+        startX: panStart.x,
+        startY: panStart.y,
+        deltaX: e.clientX - panStart.x,
+        deltaY: e.clientY - panStart.y
+      })
+
+      const deltaX = e.clientX - panStart.x
+      const deltaY = e.clientY - panStart.y
+
+      setCanvasState(prev => {
+        const newPan = {
+          x: prev.pan.x + deltaX,
+          y: prev.pan.y + deltaY
+        }
+        console.log('📍 EnhancedCanvas Updating pan position:', { oldPan: prev.pan, newPan })
+        return {
+          ...prev,
+          pan: newPan
+        }
+      })
+
+      setPanStart({ x: e.clientX, y: e.clientY })
+    }
+
     // Handle dragging
     if (isDragging && dragStart && canvasState.selectedShapeIds.length > 0) {
       const deltaX = screenPoint.x - dragStart.x
@@ -244,7 +300,7 @@ const EnhancedCanvas = forwardRef<HTMLDivElement, EnhancedCanvasProps>(({
     }
   }, [
     isDrawing, drawStart, currentTool, canvasState.shapes.length, canvasState.selectedShapeIds,
-    isDragging, dragStart, canvasState.zoom, canvasState.snapToGrid, canvasState.snapToEdges,
+    isDragging, dragStart, isPanning, panStart, canvasState.zoom, canvasState.snapToGrid, canvasState.snapToEdges,
     canvasState.gridSnapSize, selectionBox, screenToCanvas, setCanvasState
   ])
 
@@ -296,8 +352,15 @@ const EnhancedCanvas = forwardRef<HTMLDivElement, EnhancedCanvasProps>(({
       }
       setSelectionBox(null)
     }
+
+    // Handle panning stop
+    if (isPanning) {
+      console.log('🛑 EnhancedCanvas Panning stopped:', { wasPanning: isPanning })
+      setIsPanning(false)
+      setPanStart(null)
+    }
   }, [
-    isDrawing, drawStart, isDragging, selectionBox, setCanvasState, onSelectionChange, canvasState.selectedShapeIds
+    isDrawing, drawStart, isDragging, selectionBox, isPanning, setCanvasState, onSelectionChange, canvasState.selectedShapeIds
   ])
 
   // Handle canvas click
@@ -401,11 +464,39 @@ const EnhancedCanvas = forwardRef<HTMLDivElement, EnhancedCanvasProps>(({
         minWidth: '400px',
         position: 'relative',
         backgroundColor: hexToRgba(canvasState.canvasBackgroundColor, canvasState.canvasBackgroundOpacity),
-        overflow: 'hidden'
+        overflow: 'hidden',
+        cursor: isPanning ? 'grabbing' : 'default'
       }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
+      onMouseDown={(e) => {
+        console.log('🎯 EnhancedCanvas onMouseDown - EVENT RECEIVED:', { 
+          button: e.button, 
+          shiftKey: e.shiftKey,
+          ctrlKey: e.ctrlKey,
+          altKey: e.altKey,
+          metaKey: e.metaKey,
+          clientX: e.clientX,
+          clientY: e.clientY,
+          target: e.target,
+          currentTarget: e.currentTarget
+        })
+        
+        // Handle panning first, before other mouse down logic
+        handleMouseDownPan(e)
+        // Only proceed with other mouse down logic if not panning (Shift + Left mouse)
+        if (!(e.button === 0 && e.shiftKey)) {
+          handleMouseDown(e)
+        }
+      }}
+      onMouseMove={(e) => {
+        console.log('🎯 EnhancedCanvas onMouseMove:', { isPanning })
+        // Handle panning first
+        handleMouseMove(e)
+      }}
+      onMouseUp={(e) => {
+        console.log('🎯 EnhancedCanvas onMouseUp')
+        // Handle panning first
+        handleMouseUp()
+      }}
     >
       <CanvasRenderer
         canvasState={canvasState}
