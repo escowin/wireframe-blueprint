@@ -43,8 +43,10 @@ function App() {
   const [autoSavePromptShown, setAutoSavePromptShown] = useState(false)
   const [showAutoSaveModal, setShowAutoSaveModal] = useState(false)
   const [pendingAutoSaveState, setPendingAutoSaveState] = useState<any>(null)
-  const [toolbarWidth, setToolbarWidth] = useState(300)
   const [propertiesWidth, setPropertiesWidth] = useState(300)
+  const [isResizing, setIsResizing] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [startWidth, setStartWidth] = useState(0)
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -60,6 +62,17 @@ function App() {
     }
   }, [autoSavePromptShown])
 
+  // Load saved properties panel width
+  useEffect(() => {
+    const savedWidth = localStorage.getItem('properties-panel-width')
+    if (savedWidth) {
+      const parsedWidth = parseInt(savedWidth, 10)
+      if (parsedWidth >= 200 && parsedWidth <= 500) {
+        setPropertiesWidth(parsedWidth)
+      }
+    }
+  }, [])
+
   const handleAutoSaveRestore = () => {
     if (pendingAutoSaveState) {
       setCanvasState(migrateCanvasState(pendingAutoSaveState))
@@ -72,6 +85,43 @@ function App() {
     clearAutoSave() // This will also clear the session flag
     setShowAutoSaveModal(false)
     setPendingAutoSaveState(null)
+  }
+
+  // Properties panel resize handlers
+  const handlePropertiesResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+    setStartX(e.clientX)
+    setStartWidth(propertiesWidth)
+    
+    // Add global event listeners
+    document.addEventListener('mousemove', handlePropertiesResizeMove)
+    document.addEventListener('mouseup', handlePropertiesResizeEnd)
+    
+    // Add class to body for global styling
+    document.body.classList.add('resizing')
+  }
+
+  const handlePropertiesResizeMove = (e: MouseEvent) => {
+    if (!isResizing) return
+    
+    const deltaX = startX - e.clientX
+    const newWidth = Math.max(200, Math.min(500, startWidth + deltaX))
+    setPropertiesWidth(newWidth)
+  }
+
+  const handlePropertiesResizeEnd = () => {
+    setIsResizing(false)
+    
+    // Remove global event listeners
+    document.removeEventListener('mousemove', handlePropertiesResizeMove)
+    document.removeEventListener('mouseup', handlePropertiesResizeEnd)
+    
+    // Remove class from body
+    document.body.classList.remove('resizing')
+    
+    // Save to localStorage
+    localStorage.setItem('properties-panel-width', propertiesWidth.toString())
   }
 
   // Check storage usage on mount and after auto-save
@@ -455,37 +505,28 @@ function App() {
         <CanvasDemo />
       ) : (
         <>
-          <ResizablePanel
-            position="left"
-            defaultWidth={300}
-            minWidth={200}
-            maxWidth={500}
-            onWidthChange={setToolbarWidth}
-            className="toolbar-panel"
-          >
-            <Toolbar 
-              currentTool={currentTool}
-              onToolChange={handleToolChange}
-              onExportPNG={handleExportPNG}
-              onExportHTML={handleExportHTML}
-              onSave={handleSave}
-              onLoad={handleLoad}
-              showCssLabels={canvasState.showCssLabels}
-              onToggleCssLabels={handleToggleCssLabels}
-              selectedShape={selectedShape}
-              onLayerAction={handleLayerAction}
-              selectedShapeIds={canvasState.selectedShapeIds}
-              onAlignmentAction={handleAlignmentAction}
-              onGroupAction={handleGroupAction}
-              canvasState={canvasState}
-              onCanvasUpdate={handleCanvasUpdate}
-              onApplyTemplate={handleApplyTemplate}
-              onShowVersionHistory={handleShowVersionHistory}
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              versionHistory={versionHistory}
-            />
-          </ResizablePanel>
+          <Toolbar 
+            currentTool={currentTool}
+            onToolChange={handleToolChange}
+            onExportPNG={handleExportPNG}
+            onExportHTML={handleExportHTML}
+            onSave={handleSave}
+            onLoad={handleLoad}
+            showCssLabels={canvasState.showCssLabels}
+            onToggleCssLabels={handleToggleCssLabels}
+            selectedShape={selectedShape}
+            onLayerAction={handleLayerAction}
+            selectedShapeIds={canvasState.selectedShapeIds}
+            onAlignmentAction={handleAlignmentAction}
+            onGroupAction={handleGroupAction}
+            canvasState={canvasState}
+            onCanvasUpdate={handleCanvasUpdate}
+            onApplyTemplate={handleApplyTemplate}
+            onShowVersionHistory={handleShowVersionHistory}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            versionHistory={versionHistory}
+          />
       <div className="app-main">
         <div className="canvas-container">
           <EnhancedCanvas 
@@ -496,13 +537,10 @@ function App() {
             onSelectionChange={handleSelectionChange}
           />
         </div>
-        <ResizablePanel
-          position="right"
-          defaultWidth={300}
-          minWidth={200}
-          maxWidth={500}
-          onWidthChange={setPropertiesWidth}
-          className="properties-panel"
+        <div 
+          className={`properties-panel-container ${isResizing ? 'resizing' : ''}`}
+          style={{ width: `${propertiesWidth}px` }}
+          onMouseDown={handlePropertiesResizeStart}
         >
           <PropertiesPanel 
             selectedShape={selectedShape}
@@ -511,7 +549,7 @@ function App() {
             canvasState={canvasState}
             onCanvasUpdate={handleCanvasUpdate}
           />
-        </ResizablePanel>
+        </div>
       </div>
       
       {/* Version History Modal */}
@@ -554,9 +592,6 @@ function App() {
       
       {/* Panel Width Indicators */}
       <div className="panel-width-indicators">
-        <div className="width-indicator">
-          <span>Toolbar: {toolbarWidth}px</span>
-        </div>
         <div className="width-indicator">
           <span>Properties: {propertiesWidth}px</span>
         </div>

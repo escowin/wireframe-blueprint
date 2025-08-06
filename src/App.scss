@@ -20,19 +20,57 @@
   overflow: hidden;
 }
 
-.toolbar-panel {
-  // Toolbar panel specific styles
-  .toolbar {
-    width: 100% !important; // Override fixed width
-    height: 100%;
+.properties-panel-container {
+  position: relative;
+  min-width: 200px;
+  max-width: 500px;
+  height: 100%;
+  flex-shrink: 0;
+  transition: width 0.1s ease-out;
+  
+  // Thick border on the left
+  border-left: 5px solid #000;
+  
+  // Resize handle
+  &::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    cursor: col-resize;
+    z-index: 10;
+    background: transparent;
+    transition: background-color 0.2s ease;
   }
-}
-
-.properties-panel {
-  // Properties panel specific styles
-  .properties-panel {
-    width: 100% !important; // Override fixed width
-    height: 100%;
+  
+  // Hover effect for resize handle
+  &:hover::before {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  // Active state during resize
+  &.resizing::before {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  // Visual indicator on hover
+  &:hover::after {
+    content: '][';
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: bold;
+    color: #000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 4px;
+    border-radius: 2px;
+    z-index: 11;
+    pointer-events: none;
   }
 }
 
