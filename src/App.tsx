@@ -5,7 +5,7 @@ import PropertiesPanel from './components/PropertiesPanel'
 import VersionHistoryComponent from './components/VersionHistory'
 import CanvasDemo from './components/CanvasDemo'
 import AutoSaveModal from './components/AutoSaveModal'
-import ResizablePanel from './components/ResizablePanel'
+
 import { CanvasState, Shape, ToolType, AlignmentAction, GroupAction, VersionHistory } from './types'
 import { exportAsPNG, exportAsHTML, saveDiagram, loadDiagram, autoSave, loadAutoSave, clearAutoSave, markAutoSavePrompted, hasAutoSaveBeenPrompted, bringToFront, sendToBack, bringForward, sendBackward, checkLocalStorageUsage, validateAndFixShapes, alignShapes, distributeShapes, createGroup, ungroupShapes, canGroupShapes, canUngroupShapes, getSelectedGroupIds, applyTemplate } from './utils/helpers'
 import { initializeVersionHistory, addVersionEntry, undoVersion, redoVersion, loadVersionHistory, saveVersionHistory, hasCanvasStateChanged, getChangeSummary } from './utils/versionHistory'
@@ -47,6 +47,11 @@ function App() {
   const [isResizing, setIsResizing] = useState(false)
   const [startX, setStartX] = useState(0)
   const [startWidth, setStartWidth] = useState(0)
+  
+  // Use refs to store current values for event listeners
+  const isResizingRef = useRef(false)
+  const startXRef = useRef(0)
+  const startWidthRef = useRef(0)
 
   // Load auto-saved diagram on app start
   useEffect(() => {
@@ -73,6 +78,21 @@ function App() {
     }
   }, [])
 
+
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    isResizingRef.current = isResizing
+  }, [isResizing])
+  
+  useEffect(() => {
+    startXRef.current = startX
+  }, [startX])
+  
+  useEffect(() => {
+    startWidthRef.current = startWidth
+  }, [startWidth])
+
   const handleAutoSaveRestore = () => {
     if (pendingAutoSaveState) {
       setCanvasState(migrateCanvasState(pendingAutoSaveState))
@@ -90,35 +110,38 @@ function App() {
   // Properties panel resize handlers
   const handlePropertiesResizeStart = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
+    
+    // Update both state and refs
     setIsResizing(true)
     setStartX(e.clientX)
     setStartWidth(propertiesWidth)
     
+    // Update refs immediately for event listeners
+    isResizingRef.current = true
+    startXRef.current = e.clientX
+    startWidthRef.current = propertiesWidth
+    
     // Add global event listeners
     document.addEventListener('mousemove', handlePropertiesResizeMove)
     document.addEventListener('mouseup', handlePropertiesResizeEnd)
-    
-    // Add class to body for global styling
-    document.body.classList.add('resizing')
   }
 
   const handlePropertiesResizeMove = (e: MouseEvent) => {
-    if (!isResizing) return
+    if (!isResizingRef.current) return
     
-    const deltaX = startX - e.clientX
-    const newWidth = Math.max(200, Math.min(500, startWidth + deltaX))
+    const deltaX = e.clientX - startXRef.current
+    const newWidth = Math.max(200, Math.min(500, startWidthRef.current - deltaX))
     setPropertiesWidth(newWidth)
   }
 
   const handlePropertiesResizeEnd = () => {
     setIsResizing(false)
+    isResizingRef.current = false
     
     // Remove global event listeners
     document.removeEventListener('mousemove', handlePropertiesResizeMove)
     document.removeEventListener('mouseup', handlePropertiesResizeEnd)
-    
-    // Remove class from body
-    document.body.classList.remove('resizing')
     
     // Save to localStorage
     localStorage.setItem('properties-panel-width', propertiesWidth.toString())
@@ -539,9 +562,12 @@ function App() {
         </div>
         <div 
           className={`properties-panel-container ${isResizing ? 'resizing' : ''}`}
-          style={{ width: `${propertiesWidth}px` }}
-          onMouseDown={handlePropertiesResizeStart}
+          style={{ '--properties-width': `${propertiesWidth}px` } as React.CSSProperties}
         >
+          <div 
+            className="properties-resize-handle"
+            onMouseDown={handlePropertiesResizeStart}
+          />
           <PropertiesPanel 
             selectedShape={selectedShape}
             onShapeUpdate={handleShapeUpdate}

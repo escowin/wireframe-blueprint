@@ -28,6 +28,7 @@ The diagramming application now features a simplified resizable panel system tha
 ```scss
 .properties-panel-container {
   position: relative;
+  width: var(--properties-width, 300px); // Use custom property with fallback
   min-width: 200px;
   max-width: 500px;
   height: 100%;
@@ -37,73 +38,96 @@ The diagramming application now features a simplified resizable panel system tha
   // Thick border on the left
   border-left: 5px solid #000;
   
-  // Resize handle
-  &::before {
-    content: '';
+  // Dedicated resize handle
+  .properties-resize-handle {
     position: absolute;
-    left: -5px;
+    left: -10px;
     top: 0;
     bottom: 0;
-    width: 10px;
+    width: 20px;
     cursor: col-resize;
     z-index: 10;
     background: transparent;
     transition: background-color 0.2s ease;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+      
+      &::after {
+        content: '][';
+        position: absolute;
+        left: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: monospace;
+        font-size: 12px;
+        font-weight: bold;
+        color: #000;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 2px 4px;
+        border-radius: 2px;
+        z-index: 11;
+        pointer-events: none;
+      }
+    }
+    
+    &:active {
+      background: rgba(0, 0, 0, 0.2);
+    }
   }
   
-  // Visual indicator on hover
-  &:hover::after {
-    content: '][';
-    position: absolute;
-    left: -15px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-family: monospace;
-    font-size: 12px;
-    font-weight: bold;
-    color: #000;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 2px 4px;
-    border-radius: 2px;
-    z-index: 11;
-    pointer-events: none;
+  // Only apply global styles when this specific panel is being resized
+  &.resizing {
+    user-select: none;
+    
+    * {
+      user-select: none;
+    }
   }
 }
 ```
 
-### Resize Handlers
+### Resize Handlers with React Refs
 ```typescript
+// Use refs to store current values for event listeners
+const isResizingRef = useRef(false)
+const startXRef = useRef(0)
+const startWidthRef = useRef(0)
+
 const handlePropertiesResizeStart = (e: React.MouseEvent) => {
   e.preventDefault()
+  e.stopPropagation()
+  
+  // Update both state and refs
   setIsResizing(true)
   setStartX(e.clientX)
   setStartWidth(propertiesWidth)
   
+  // Update refs immediately for event listeners
+  isResizingRef.current = true
+  startXRef.current = e.clientX
+  startWidthRef.current = propertiesWidth
+  
   // Add global event listeners
   document.addEventListener('mousemove', handlePropertiesResizeMove)
   document.addEventListener('mouseup', handlePropertiesResizeEnd)
-  
-  // Add class to body for global styling
-  document.body.classList.add('resizing')
 }
 
 const handlePropertiesResizeMove = (e: MouseEvent) => {
-  if (!isResizing) return
+  if (!isResizingRef.current) return
   
-  const deltaX = startX - e.clientX
-  const newWidth = Math.max(200, Math.min(500, startWidth + deltaX))
+  const deltaX = e.clientX - startXRef.current
+  const newWidth = Math.max(200, Math.min(500, startWidthRef.current - deltaX))
   setPropertiesWidth(newWidth)
 }
 
 const handlePropertiesResizeEnd = () => {
   setIsResizing(false)
+  isResizingRef.current = false
   
   // Remove global event listeners
   document.removeEventListener('mousemove', handlePropertiesResizeMove)
   document.removeEventListener('mouseup', handlePropertiesResizeEnd)
-  
-  // Remove class from body
-  document.body.classList.remove('resizing')
   
   // Save to localStorage
   localStorage.setItem('properties-panel-width', propertiesWidth.toString())
@@ -140,6 +164,7 @@ const handlePropertiesResizeEnd = () => {
   <EnhancedCanvas />
 </div>
 <div className="properties-panel-container">
+  <div className="properties-resize-handle" />
   <PropertiesPanel />
 </div>
 ```
@@ -157,6 +182,11 @@ const [propertiesWidth, setPropertiesWidth] = useState(300)
 const [isResizing, setIsResizing] = useState(false)
 const [startX, setStartX] = useState(0)
 const [startWidth, setStartWidth] = useState(0)
+
+// Use refs to store current values for event listeners
+const isResizingRef = useRef(false)
+const startXRef = useRef(0)
+const startWidthRef = useRef(0)
 ```
 
 ### localStorage Key
@@ -202,12 +232,48 @@ useEffect(() => {
 - **Complex State Management**: Multiple width states and handlers
 - **Generic Component**: Reusable ResizablePanel component
 - **Subtle Indicators**: Thin resize handles with hover effects
+- **Global Styles**: Body-level CSS classes affecting all elements
 
 ### Current Approach
 - **Single Resizable Panel**: Only properties panel is resizable
-- **Simplified State**: Single width state and handlers
+- **Simplified State**: Single width state and handlers with React refs
 - **Direct Implementation**: Inline resize logic in App component
 - **Clear Visual Indicators**: Thick border with obvious resize area
+- **Targeted Styling**: Only affects the specific panel being resized
+
+## Technical Improvements
+
+### React State Closure Fix
+The implementation uses React refs to solve the classic state closure problem with global event listeners:
+
+```typescript
+// Problem: Event listeners capture stale state values
+const handlePropertiesResizeMove = (e: MouseEvent) => {
+  if (!isResizing) return // ❌ This is always false due to closure
+}
+
+// Solution: Use refs for current values
+const isResizingRef = useRef(false)
+const handlePropertiesResizeMove = (e: MouseEvent) => {
+  if (!isResizingRef.current) return // ✅ Always gets current value
+}
+```
+
+### CSS Custom Properties
+Uses CSS custom properties for dynamic width updates:
+
+```scss
+.properties-panel-container {
+  width: var(--properties-width, 300px); // Dynamic width with fallback
+}
+```
+
+### Dedicated Resize Handle
+Replaced pseudo-elements with a dedicated resize handle element for better accessibility:
+
+```jsx
+<div className="properties-resize-handle" onMouseDown={handlePropertiesResizeStart} />
+```
 
 ## Testing
 
