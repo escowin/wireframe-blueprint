@@ -1,6 +1,7 @@
 import React from 'react'
 import { Shape } from '../types'
 import { hexToRgba, getLayerInfo, bringToFront, sendToBack, bringForward, sendBackward, getChildren, getAncestors, applyNesting } from '../utils/helpers'
+import Tooltip from './Tooltip'
 import './PropertiesPanel.scss'
 
 interface PropertiesPanelProps {
@@ -626,52 +627,57 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           
           <div className="layer-controls">
             <div className="layer-row">
-              <button
-                className="layer-btn layer-btn-primary"
-                onClick={() => handleLayerAction('front')}
-                disabled={layerInfo.layerPosition === 'Top'}
-                title="Bring to Front"
-              >
-                ↑ Front
-              </button>
-              <button
-                className="layer-btn layer-btn-secondary"
-                onClick={() => handleLayerAction('forward')}
-                disabled={layerInfo.layerPosition === 'Top'}
-                title="Bring Forward"
-              >
-                ↑
-              </button>
+              <Tooltip content="Bring to Front" position="left">
+                <button
+                  className="layer-btn layer-btn-primary"
+                  onClick={() => handleLayerAction('front')}
+                  disabled={layerInfo.layerPosition === 'Top'}
+                >
+                  ↑ Front
+                </button>
+              </Tooltip>
+              <Tooltip content="Bring Forward" position="left">
+                <button
+                  className="layer-btn layer-btn-secondary"
+                  onClick={() => handleLayerAction('forward')}
+                  disabled={layerInfo.layerPosition === 'Top'}
+                >
+                  ↑
+                </button>
+              </Tooltip>
             </div>
             <div className="layer-row">
-              <button
-                className="layer-btn layer-btn-secondary"
-                onClick={() => handleLayerAction('backward')}
-                disabled={layerInfo.layerPosition === 'Bottom'}
-                title="Send Backward"
-              >
-                ↓
-              </button>
-              <button
-                className="layer-btn layer-btn-primary"
-                onClick={() => handleLayerAction('back')}
-                disabled={layerInfo.layerPosition === 'Bottom'}
-                title="Send to Back"
-              >
-                ↓ Back
-              </button>
+              <Tooltip content="Send Backward" position="left">
+                <button
+                  className="layer-btn layer-btn-secondary"
+                  onClick={() => handleLayerAction('backward')}
+                  disabled={layerInfo.layerPosition === 'Bottom'}
+                >
+                  ↓
+                </button>
+              </Tooltip>
+              <Tooltip content="Send to Back" position="left">
+                <button
+                  className="layer-btn layer-btn-primary"
+                  onClick={() => handleLayerAction('back')}
+                  disabled={layerInfo.layerPosition === 'Bottom'}
+                >
+                  ↓ Back
+                </button>
+              </Tooltip>
             </div>
           </div>
           
           <div className="z-index-control">
             <label className="z-index-label">Z-Index</label>
-            <input
-              type="number"
-              className="input z-index-input"
-              value={selectedShape.zIndex}
-              onChange={(e) => handlePropertyChange('zIndex', parseInt(e.target.value) || 0)}
-              title="Direct z-index control"
-            />
+            <Tooltip content="Direct z-index control" position="left">
+              <input
+                type="number"
+                className="input z-index-input"
+                value={selectedShape.zIndex}
+                onChange={(e) => handlePropertyChange('zIndex', parseInt(e.target.value) || 0)}
+              />
+            </Tooltip>
           </div>
         </div>
 
@@ -718,19 +724,20 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           {/* Nesting Controls */}
           <div className="nesting-controls">
             <div className="nesting-row">
-              <button
-                className="nesting-btn nesting-btn-remove"
-                onClick={() => {
-                  if (onShapesUpdate && selectedShape.parentId) {
-                    const updatedShapes = applyNesting(canvasState.shapes, selectedShape.id, null)
-                    onShapesUpdate(updatedShapes)
-                  }
-                }}
-                disabled={!selectedShape.parentId}
-                title="Remove from parent"
-              >
-                Remove from Parent
-              </button>
+              <Tooltip content="Remove from parent" position="left">
+                <button
+                  className="nesting-btn nesting-btn-remove"
+                  onClick={() => {
+                    if (onShapesUpdate && selectedShape.parentId) {
+                      const updatedShapes = applyNesting(canvasState.shapes, selectedShape.id, null)
+                      onShapesUpdate(updatedShapes)
+                    }
+                  }}
+                  disabled={!selectedShape.parentId}
+                >
+                  Remove from Parent
+                </button>
+              </Tooltip>
             </div>
             
             {/* Parent Selection */}

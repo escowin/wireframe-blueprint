@@ -286,13 +286,8 @@
       letter-spacing: 0.5px;
       text-transform: uppercase;
       
-      &:hover:not(:disabled) {
-        background: $primary-color;
-        color: $background-color;
-        border-color: $primary-color;
-        transform: translateY(-2px);
-        box-shadow: $shadow-md;
-      }
+      // Remove the general hover rule that conflicts with button variants
+      // Individual button variants will handle their own hover states
       
       &:active:not(:disabled) {
         transform: translateY(0);
@@ -316,6 +311,9 @@
         &:hover:not(:disabled) {
           background: color.adjust($primary-color, $lightness: -10%);
           border-color: color.adjust($primary-color, $lightness: -10%);
+          color: $background-color; // Ensure white text stays white
+          transform: translateY(-2px);
+          box-shadow: $shadow-md;
         }
       }
       
@@ -328,6 +326,8 @@
           background: $primary-color;
           color: $background-color;
           border-color: $primary-color;
+          transform: translateY(-2px);
+          box-shadow: $shadow-md;
         }
       }
     }
@@ -633,6 +633,8 @@
           background: $error-color;
           color: $background-color;
           border-color: $error-color;
+          transform: translateY(-2px);
+          box-shadow: $shadow-md;
         }
       }
     }

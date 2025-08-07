@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Template, TemplateCategory } from '../types'
 import { templateCategories } from '../utils/templates'
+import Tooltip from './Tooltip'
 import './Templates.scss'
 
 interface TemplatesProps {
@@ -20,25 +21,27 @@ const Templates: React.FC<TemplatesProps> = ({ onApplyTemplate }) => {
 
   return (
     <div className="templates-container">
-      <button
-        className="btn btn--primary templates-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        title="Open Templates"
-      >
-        📋 Templates
-      </button>
+      <Tooltip content="Open Templates" position="right">
+        <button
+          className="btn btn--primary templates-toggle"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          📋 Templates
+        </button>
+      </Tooltip>
 
       {isOpen && (
         <div className="templates-modal">
           <div className="templates-header">
             <h3>Templates</h3>
-            <button
-              className="templates-close"
-              onClick={() => setIsOpen(false)}
-              title="Close Templates"
-            >
-              ✕
-            </button>
+            <Tooltip content="Close Templates" position="left">
+              <button
+                className="templates-close"
+                onClick={() => setIsOpen(false)}
+              >
+                ✕
+              </button>
+            </Tooltip>
           </div>
 
           <div className="templates-categories">

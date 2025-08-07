@@ -1,0 +1,135 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.tooltip-trigger {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: $z-index-tooltip;
+  background: $primary-color;
+  color: $background-color;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-md;
+  font-size: $font-size-xs;
+  font-weight: 500;
+  font-family: $font-family;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: $shadow-lg;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  animation: tooltipFadeIn 0.2s ease-out;
+  
+  // Arrow styling
+  &::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+  }
+  
+  // Position-specific arrow placement
+  &--top {
+    &::before {
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-top-color: $primary-color;
+      border-bottom: none;
+    }
+  }
+  
+  &--bottom {
+    &::before {
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom-color: $primary-color;
+      border-top: none;
+    }
+  }
+  
+  &--left {
+    &::before {
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left-color: $primary-color;
+      border-right: none;
+    }
+  }
+  
+  &--right {
+    &::before {
+      left: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-right-color: $primary-color;
+      border-left: none;
+    }
+  }
+  
+  // Enhanced contrast for better readability
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: $border-radius-md;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    pointer-events: none;
+  }
+}
+
+// Animation for smooth appearance
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .tooltip {
+    font-size: $font-size-xs;
+    padding: $spacing-xs $spacing-sm;
+    max-width: 200px;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .tooltip {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+    
+    &::before {
+      border-top-color: #000000;
+      border-bottom-color: #000000;
+      border-left-color: #000000;
+      border-right-color: #000000;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    animation: none;
+  }
+}

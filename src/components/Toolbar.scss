@@ -57,6 +57,7 @@
   &:hover {
     background: $surface-color;
     border-color: $accent-color;
+    color: $primary-color; // Ensure proper text color for contrast
     transform: translateX(4px);
     box-shadow: $shadow-md;
     

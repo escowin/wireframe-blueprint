@@ -2,6 +2,7 @@ import React from 'react'
 import { ToolType, Shape, AlignmentAction, CanvasState, GroupAction, VersionHistory } from '../types'
 import { getVersionHistoryInfo } from '../utils/versionHistory'
 import Templates from './Templates'
+import Tooltip from './Tooltip'
 import './Toolbar.scss'
 
 interface ToolbarProps {
@@ -61,15 +62,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <h3 className="toolbar-title">Tools</h3>
         <div className="toolbar-tools">
           {tools.map(tool => (
-            <button
-              key={tool.id}
-              className={`toolbar-tool ${currentTool === tool.id ? 'active' : ''}`}
-              onClick={() => onToolChange?.(tool.id)}
-              title={tool.label}
-            >
-              <span className="tool-icon">{tool.icon}</span>
-              <span className="tool-label">{tool.label}</span>
-            </button>
+            <Tooltip key={tool.id} content={tool.label} position="right">
+              <button
+                className={`toolbar-tool ${currentTool === tool.id ? 'active' : ''}`}
+                onClick={() => onToolChange?.(tool.id)}
+              >
+                <span className="tool-icon">{tool.icon}</span>
+                <span className="tool-label">{tool.label}</span>
+              </button>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -88,38 +89,42 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <h3 className="toolbar-title">Layers</h3>
           <div className="toolbar-actions">
             <div className="layer-buttons">
-              <button
-                className="btn btn--primary layer-btn"
-                onClick={() => onLayerAction?.('front')}
-                title="Bring to Front"
-                disabled={!onLayerAction}
-              >
-                ↑ Front
-              </button>
-              <button
-                className="btn btn--secondary layer-btn"
-                onClick={() => onLayerAction?.('forward')}
-                title="Bring Forward"
-                disabled={!onLayerAction}
-              >
-                ↑
-              </button>
-              <button
-                className="btn btn--secondary layer-btn"
-                onClick={() => onLayerAction?.('backward')}
-                title="Send Backward"
-                disabled={!onLayerAction}
-              >
-                ↓
-              </button>
-              <button
-                className="btn btn--primary layer-btn"
-                onClick={() => onLayerAction?.('back')}
-                title="Send to Back"
-                disabled={!onLayerAction}
-              >
-                ↓ Back
-              </button>
+              <Tooltip content="Bring to Front" position="right">
+                <button
+                  className="btn btn--primary layer-btn"
+                  onClick={() => onLayerAction?.('front')}
+                  disabled={!onLayerAction}
+                >
+                  ↑ Front
+                </button>
+              </Tooltip>
+              <Tooltip content="Bring Forward" position="right">
+                <button
+                  className="btn btn--secondary layer-btn"
+                  onClick={() => onLayerAction?.('forward')}
+                  disabled={!onLayerAction}
+                >
+                  ↑
+                </button>
+              </Tooltip>
+              <Tooltip content="Send Backward" position="right">
+                <button
+                  className="btn btn--secondary layer-btn"
+                  onClick={() => onLayerAction?.('backward')}
+                  disabled={!onLayerAction}
+                >
+                  ↓
+                </button>
+              </Tooltip>
+              <Tooltip content="Send to Back" position="right">
+                <button
+                  className="btn btn--primary layer-btn"
+                  onClick={() => onLayerAction?.('back')}
+                  disabled={!onLayerAction}
+                >
+                  ↓ Back
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -133,78 +138,86 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <div className="alignment-buttons">
               {/* Horizontal Alignment */}
               <div className="alignment-row">
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('align-left')}
-                  title="Align Left"
-                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
-                >
-                  ⇤
-                </button>
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('align-center')}
-                  title="Align Center"
-                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
-                >
-                  ⇔
-                </button>
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('align-right')}
-                  title="Align Right"
-                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
-                >
-                  ⇥
-                </button>
+                <Tooltip content="Align Left" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('align-left')}
+                    disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                  >
+                    ⇤
+                  </button>
+                </Tooltip>
+                <Tooltip content="Align Center" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('align-center')}
+                    disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                  >
+                    ⇔
+                  </button>
+                </Tooltip>
+                <Tooltip content="Align Right" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('align-right')}
+                    disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                  >
+                    ⇥
+                  </button>
+                </Tooltip>
               </div>
               
               {/* Vertical Alignment */}
               <div className="alignment-row">
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('align-top')}
-                  title="Align Top"
-                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
-                >
-                  ⇧
-                </button>
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('align-middle')}
-                  title="Align Middle"
-                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
-                >
-                  ⇕
-                </button>
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('align-bottom')}
-                  title="Align Bottom"
-                  disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
-                >
-                  ⇩
-                </button>
+                <Tooltip content="Align Top" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('align-top')}
+                    disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                  >
+                    ⇧
+                  </button>
+                </Tooltip>
+                <Tooltip content="Align Middle" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('align-middle')}
+                    disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                  >
+                    ⇕
+                  </button>
+                </Tooltip>
+                <Tooltip content="Align Bottom" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('align-bottom')}
+                    disabled={selectedShapeIds.length < 2 || !onAlignmentAction}
+                  >
+                    ⇩
+                  </button>
+                </Tooltip>
               </div>
               
               {/* Distribution */}
               <div className="alignment-row">
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('distribute-horizontal')}
-                  title="Distribute Horizontally"
-                  disabled={selectedShapeIds.length < 3 || !onAlignmentAction}
-                >
-                  ⇹
-                </button>
-                <button
-                  className="btn btn--secondary alignment-btn"
-                  onClick={() => onAlignmentAction?.('distribute-vertical')}
-                  title="Distribute Vertically"
-                  disabled={selectedShapeIds.length < 3 || !onAlignmentAction}
-                >
-                  ⇳
-                </button>
+                <Tooltip content="Distribute Horizontally" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('distribute-horizontal')}
+                    disabled={selectedShapeIds.length < 3 || !onAlignmentAction}
+                  >
+                    ⇹
+                  </button>
+                </Tooltip>
+                <Tooltip content="Distribute Vertically" position="top">
+                  <button
+                    className="btn btn--secondary alignment-btn"
+                    onClick={() => onAlignmentAction?.('distribute-vertical')}
+                    disabled={selectedShapeIds.length < 3 || !onAlignmentAction}
+                  >
+                    ⇳
+                  </button>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -217,22 +230,24 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <h3 className="toolbar-title">Grouping</h3>
           <div className="toolbar-actions">
             <div className="grouping-buttons">
-              <button
-                className="btn btn--primary grouping-btn"
-                onClick={() => onGroupAction?.('group')}
-                title="Group Selected Shapes"
-                disabled={selectedShapeIds.length < 2 || !onGroupAction}
-              >
-                📦 Group
-              </button>
-              <button
-                className="btn btn--secondary grouping-btn"
-                onClick={() => onGroupAction?.('ungroup')}
-                title="Ungroup Selected Shapes"
-                disabled={selectedShapeIds.length === 0 || !onGroupAction}
-              >
-                📦❌ Ungroup
-              </button>
+              <Tooltip content="Group Selected Shapes" position="right">
+                <button
+                  className="btn btn--primary grouping-btn"
+                  onClick={() => onGroupAction?.('group')}
+                  disabled={selectedShapeIds.length < 2 || !onGroupAction}
+                >
+                  📦 Group
+                </button>
+              </Tooltip>
+              <Tooltip content="Ungroup Selected Shapes" position="right">
+                <button
+                  className="btn btn--secondary grouping-btn"
+                  onClick={() => onGroupAction?.('ungroup')}
+                  disabled={selectedShapeIds.length === 0 || !onGroupAction}
+                >
+                  📦❌ Ungroup
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -243,22 +258,24 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <h3 className="toolbar-title">Snap Settings</h3>
         <div className="toolbar-actions">
           <div className="snap-buttons">
-            <button
-              className={`btn ${canvasState?.snapToGrid ? 'btn--primary' : 'btn--secondary'} snap-btn`}
-              onClick={() => onAlignmentAction?.('snap-to-grid')}
-              title="Toggle Snap to Grid"
-              disabled={!onAlignmentAction}
-            >
-              Grid Snap
-            </button>
-            <button
-              className={`btn ${canvasState?.snapToEdges ? 'btn--primary' : 'btn--secondary'} snap-btn`}
-              onClick={() => onAlignmentAction?.('snap-to-edges')}
-              title="Toggle Snap to Edges"
-              disabled={!onAlignmentAction}
-            >
-              Edge Snap
-            </button>
+            <Tooltip content="Toggle Snap to Grid" position="right">
+              <button
+                className={`btn ${canvasState?.snapToGrid ? 'btn--primary' : 'btn--secondary'} snap-btn`}
+                onClick={() => onAlignmentAction?.('snap-to-grid')}
+                disabled={!onAlignmentAction}
+              >
+                Grid Snap
+              </button>
+            </Tooltip>
+            <Tooltip content="Toggle Snap to Edges" position="right">
+              <button
+                className={`btn ${canvasState?.snapToEdges ? 'btn--primary' : 'btn--secondary'} snap-btn`}
+                onClick={() => onAlignmentAction?.('snap-to-edges')}
+                disabled={!onAlignmentAction}
+              >
+                Edge Snap
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -266,29 +283,32 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <div className="toolbar-section">
         <h3 className="toolbar-title">File</h3>
         <div className="toolbar-actions">
-          <button
-            className="btn btn--primary"
-            onClick={onSave}
-            title="Save diagram"
-          >
-            Save
-          </button>
-          <label className="btn btn--secondary" title="Load diagram">
-            Load
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file && onLoad) {
-                  onLoad(file)
-                }
-                // Reset the input
-                e.target.value = ''
-              }}
-              style={{ display: 'none' }}
-            />
-          </label>
+          <Tooltip content="Save diagram" position="right">
+            <button
+              className="btn btn--primary"
+              onClick={onSave}
+            >
+              Save
+            </button>
+          </Tooltip>
+          <Tooltip content="Load diagram" position="right">
+            <label className="btn btn--secondary">
+              Load
+              <input
+                type="file"
+                accept=".json"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file && onLoad) {
+                    onLoad(file)
+                  }
+                  // Reset the input
+                  e.target.value = ''
+                }}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </Tooltip>
         </div>
       </div>
 
@@ -297,30 +317,33 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <h3 className="toolbar-title">Version History</h3>
         <div className="toolbar-actions">
           <div className="version-history-buttons">
-            <button
-              className="btn btn--secondary version-btn"
-              onClick={onUndo}
-              title="Undo (Ctrl+Z)"
-              disabled={!versionHistory || !getVersionHistoryInfo(versionHistory).canUndo}
-            >
-              ↩ Undo
-            </button>
-            <button
-              className="btn btn--secondary version-btn"
-              onClick={onRedo}
-              title="Redo (Ctrl+Y)"
-              disabled={!versionHistory || !getVersionHistoryInfo(versionHistory).canRedo}
-            >
-              ↪ Redo
-            </button>
-            <button
-              className="btn btn--primary version-btn"
-              onClick={onShowVersionHistory}
-              title="View Version History"
-              disabled={!versionHistory}
-            >
-              📋 History
-            </button>
+            <Tooltip content="Undo (Ctrl+Z)" position="right">
+              <button
+                className="btn btn--secondary version-btn"
+                onClick={onUndo}
+                disabled={!versionHistory || !getVersionHistoryInfo(versionHistory).canUndo}
+              >
+                ↩ Undo
+              </button>
+            </Tooltip>
+            <Tooltip content="Redo (Ctrl+Y)" position="right">
+              <button
+                className="btn btn--secondary version-btn"
+                onClick={onRedo}
+                disabled={!versionHistory || !getVersionHistoryInfo(versionHistory).canRedo}
+              >
+                ↪ Redo
+              </button>
+            </Tooltip>
+            <Tooltip content="View Version History" position="right">
+              <button
+                className="btn btn--primary version-btn"
+                onClick={onShowVersionHistory}
+                disabled={!versionHistory}
+              >
+                📋 History
+              </button>
+            </Tooltip>
           </div>
           {versionHistory && (
             <div className="version-info">
@@ -335,33 +358,36 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <div className="toolbar-section">
         <h3 className="toolbar-title">Export</h3>
         <div className="toolbar-actions">
-          <button
-            className="btn btn--primary"
-            onClick={onExportPNG}
-            title="Export as PNG"
-          >
-            Export PNG
-          </button>
-          <button
-            className="btn btn--secondary"
-            onClick={onExportHTML}
-            title="Export as HTML"
-          >
-            Export HTML
-          </button>
+          <Tooltip content="Export as PNG" position="right">
+            <button
+              className="btn btn--primary"
+              onClick={onExportPNG}
+            >
+              Export PNG
+            </button>
+          </Tooltip>
+          <Tooltip content="Export as HTML" position="right">
+            <button
+              className="btn btn--secondary"
+              onClick={onExportHTML}
+            >
+              Export HTML
+            </button>
+          </Tooltip>
         </div>
       </div>
 
       <div className="toolbar-section">
         <h3 className="toolbar-title">Display</h3>
         <div className="toolbar-actions">
-          <button
-            className={`btn ${showCssLabels ? 'btn--primary' : 'btn--secondary'}`}
-            onClick={onToggleCssLabels}
-            title="Toggle CSS class labels"
-          >
-            {showCssLabels ? 'Hide CSS Labels' : 'Show CSS Labels'}
-          </button>
+          <Tooltip content="Toggle CSS class labels" position="right">
+            <button
+              className={`btn ${showCssLabels ? 'btn--primary' : 'btn--secondary'}`}
+              onClick={onToggleCssLabels}
+            >
+              {showCssLabels ? 'Hide CSS Labels' : 'Show CSS Labels'}
+            </button>
+          </Tooltip>
         </div>
       </div>
 
