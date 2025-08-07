@@ -552,7 +552,6 @@ export const autoSave = (canvasState: any): void => {
   try {
     // Don't auto-save if there are no shapes
     if (!canvasState.shapes || canvasState.shapes.length === 0) {
-      console.log('⏭️ Skipping auto-save - no shapes to save')
       return
     }
     
@@ -567,10 +566,7 @@ export const autoSave = (canvasState: any): void => {
     }
     
     const jsonString = JSON.stringify(autoSaveData)
-    console.log(`Auto-saving diagram with ${canvasState.shapes.length} shapes, JSON size: ${jsonString.length} bytes`)
-    
     localStorage.setItem('diagram-autosave', jsonString)
-    console.log('Auto-save successful')
   } catch (error) {
     console.warn('Failed to auto-save diagram:', error)
     if (error instanceof Error && error.name === 'QuotaExceededError') {
@@ -582,24 +578,15 @@ export const autoSave = (canvasState: any): void => {
 // Load auto-saved diagram from localStorage with support for both structures
 export const loadAutoSave = (): any | null => {
   try {
-    console.log('🔍 Loading auto-save from localStorage...')
     const saved = localStorage.getItem('diagram-autosave')
-    console.log('Raw auto-save data:', saved ? 'Found' : 'Not found')
     
     if (!saved) {
-      console.log('❌ No auto-save data in localStorage')
       return null
     }
     
     const autoSaveData = JSON.parse(saved)
-    console.log('Parsed auto-save data:', {
-      version: autoSaveData.version,
-      hasCanvasState: !!autoSaveData.canvasState,
-      shapesCount: autoSaveData.canvasState?.shapes?.length || 0
-    })
     
     if (!autoSaveData.version || !autoSaveData.canvasState) {
-      console.log('❌ Invalid auto-save data format')
       return null
     }
     
@@ -608,29 +595,24 @@ export const loadAutoSave = (): any | null => {
     // Handle different versions
     if (autoSaveData.version === '1.2') {
       // New simple format - shapes are already flat
-      console.log('✅ Loading auto-save with version 1.2 format')
     } else if (autoSaveData.version === '1.1' && Array.isArray(canvasState.shapes) && canvasState.shapes.length > 0 && canvasState.shapes[0].children !== undefined) {
       // Old nested structure - convert back to flat for canvas rendering
-      console.log('🔄 Converting auto-save nested structure to flat array...')
       canvasState.shapes = convertFromNestedStructure(canvasState.shapes)
     }
     // Old flat structure (version 1.0) - use as is
     
     // Validate and ensure all shapes have required properties
-    console.log('🔧 Validating and fixing shapes...')
     canvasState.shapes = validateAndFixShapes(canvasState.shapes)
     
     // Don't return auto-save data if there are no shapes
     if (!canvasState.shapes || canvasState.shapes.length === 0) {
-      console.log('⏭️ Auto-save data has no shapes, clearing it')
       clearAutoSave()
       return null
     }
     
-    console.log(`✅ Auto-save loaded successfully with ${canvasState.shapes.length} shapes`)
     return canvasState
   } catch (error) {
-    console.error('❌ Failed to load auto-saved diagram:', error)
+    console.warn('Failed to load auto-saved diagram:', error)
     return null
   }
 }

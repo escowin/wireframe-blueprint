@@ -55,35 +55,23 @@ function App() {
 
   // Load auto-saved diagram on app start
   useEffect(() => {
-    console.log('🔍 Checking for auto-save data...')
-    console.log('Auto-save prompt shown:', autoSavePromptShown)
-    
     // Only prevent showing the prompt if it's already been shown in this component instance
     if (autoSavePromptShown) {
-      console.log('❌ Auto-save prompt blocked - already shown in this session')
       return
     }
     
     const autoSavedState = loadAutoSave()
-    console.log('Auto-saved state loaded:', autoSavedState)
     
     if (autoSavedState) {
-      console.log('✅ Auto-save data found, showing prompt')
-      console.log('Shapes in auto-save:', autoSavedState.shapes?.length || 0)
-      
       setAutoSavePromptShown(true)
       setPendingAutoSaveState(autoSavedState)
       setShowAutoSaveModal(true)
-      
-      console.log('✅ Auto-save modal should now be visible')
-    } else {
-      console.log('❌ No auto-save data found')
     }
   }, [autoSavePromptShown])
 
-  // Add debug functions to window for testing
+  // Add debug functions to window for testing (only in development)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       (window as any).debugAutoSave = {
         checkStatus: () => {
           const autoSaveData = localStorage.getItem('diagram-autosave')
@@ -233,35 +221,22 @@ function App() {
   }, [startWidth])
 
   const handleAutoSaveRestore = () => {
-    console.log('🔄 Auto-save restore triggered')
-    console.log('Pending auto-save state:', pendingAutoSaveState)
-    
     if (pendingAutoSaveState) {
-      console.log('✅ Migrating canvas state...')
       const migratedState = migrateCanvasState(pendingAutoSaveState)
-      console.log('Migrated state:', migratedState)
-      console.log('Shapes count:', migratedState.shapes.length)
-      
       setCanvasState(migratedState)
-      console.log('✅ Canvas state updated')
       
       // Clear the auto-save data after successful restore
       clearAutoSave()
-      console.log('✅ Auto-save data cleared after restore')
-    } else {
-      console.log('❌ No pending auto-save state found')
     }
     
     setShowAutoSaveModal(false)
     setPendingAutoSaveState(null)
-    console.log('✅ Auto-save modal closed and state cleared')
   }
 
   const handleAutoSaveDiscard = () => {
     clearAutoSave() // This will clear the auto-save data
     setShowAutoSaveModal(false)
     setPendingAutoSaveState(null)
-    console.log('🗑️ Auto-save data discarded')
   }
 
   // Properties panel resize handlers
@@ -363,16 +338,11 @@ function App() {
 
   // Migration function to handle existing shapes without new properties
   const migrateCanvasState = (canvasState: any): CanvasState => {
-    console.log('🔄 Migrating canvas state...')
-    console.log('Input canvas state:', canvasState)
-    console.log('Input shapes count:', canvasState.shapes?.length || 0)
-    
     if (!canvasState.shapes || !Array.isArray(canvasState.shapes)) {
-      console.error('❌ Invalid shapes array in canvas state')
       return canvasState
     }
     
-    const migratedState = {
+    return {
       ...canvasState,
       groups: canvasState.groups ?? [],
       selectedShapeIds: canvasState.selectedShapeIds ?? [],
@@ -380,44 +350,33 @@ function App() {
       snapToGrid: canvasState.snapToGrid ?? true,
       snapToEdges: canvasState.snapToEdges ?? true,
       gridSnapSize: canvasState.gridSnapSize ?? 20,
-      shapes: canvasState.shapes.map((shape: any, index: number) => {
-        console.log(`🔧 Migrating shape ${index}:`, shape)
-        
-        const migratedShape = {
-          ...shape,
-          elementId: shape.elementId || '', // Add elementId if missing
-          cssClasses: shape.cssClasses || '', // Ensure cssClasses is defined
-          groupId: shape.groupId || undefined, // Add groupId if missing
-          borderRadius: shape.borderRadius ?? 0, // Add border radius if missing
-          boxShadow: shape.boxShadow ?? {
-            offsetX: 0,
-            offsetY: 0,
-            blurRadius: 0,
-            spreadRadius: 0,
-            color: '#000000',
-            enabled: false
-          },
-          typography: shape.typography ?? {
-            fontFamily: 'Arial, sans-serif',
-            fontSize: 14,
-            fontWeight: 'normal',
-            fontColor: '#000000',
-            textAlign: 'left',
-            lineHeight: 1.2,
-            letterSpacing: 0,
-            textDecoration: 'none',
-            textTransform: 'none'
-          }
+      shapes: canvasState.shapes.map((shape: any) => ({
+        ...shape,
+        elementId: shape.elementId || '', // Add elementId if missing
+        cssClasses: shape.cssClasses || '', // Ensure cssClasses is defined
+        groupId: shape.groupId || undefined, // Add groupId if missing
+        borderRadius: shape.borderRadius ?? 0, // Add border radius if missing
+        boxShadow: shape.boxShadow ?? {
+          offsetX: 0,
+          offsetY: 0,
+          blurRadius: 0,
+          spreadRadius: 0,
+          color: '#000000',
+          enabled: false
+        },
+        typography: shape.typography ?? {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: 14,
+          fontWeight: 'normal',
+          fontColor: '#000000',
+          textAlign: 'left',
+          lineHeight: 1.2,
+          letterSpacing: 0,
+          textDecoration: 'none',
+          textTransform: 'none'
         }
-        
-        console.log(`✅ Migrated shape ${index}:`, migratedShape)
-        return migratedShape
-      })
+      }))
     }
-    
-    console.log('✅ Canvas state migration completed')
-    console.log('Output shapes count:', migratedState.shapes.length)
-    return migratedState
   }
 
   const handleToolChange = (tool: ToolType) => {
@@ -766,7 +725,6 @@ function App() {
       )}
       
       {/* Auto-Save Modal */}
-      {console.log('🎭 App render - showAutoSaveModal:', showAutoSaveModal)}
       <AutoSaveModal
         isOpen={showAutoSaveModal}
         onRestore={handleAutoSaveRestore}

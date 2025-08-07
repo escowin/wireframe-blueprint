@@ -8,24 +8,10 @@ interface AutoSaveModalProps {
 }
 
 const AutoSaveModal: React.FC<AutoSaveModalProps> = ({ isOpen, onRestore, onDiscard }) => {
-  console.log('🎭 AutoSaveModal render - isOpen:', isOpen)
-  
   if (!isOpen) {
-    console.log('🎭 AutoSaveModal not rendering - isOpen is false')
     return null
   }
 
-  const handleRestore = () => {
-    console.log('🔄 AutoSaveModal: Restore button clicked')
-    onRestore()
-  }
-
-  const handleDiscard = () => {
-    console.log('🗑️ AutoSaveModal: Discard button clicked')
-    onDiscard()
-  }
-
-  console.log('🎭 AutoSaveModal rendering modal')
   return (
     <div className="auto-save-modal-overlay">
       <div className="auto-save-modal">
@@ -41,13 +27,13 @@ const AutoSaveModal: React.FC<AutoSaveModalProps> = ({ isOpen, onRestore, onDisc
         <div className="auto-save-modal-actions">
           <button 
             className="auto-save-modal-btn auto-save-modal-btn-secondary"
-            onClick={handleDiscard}
+            onClick={onDiscard}
           >
             Start Fresh
           </button>
           <button 
             className="auto-save-modal-btn auto-save-modal-btn-primary"
-            onClick={handleRestore}
+            onClick={onRestore}
           >
             Restore Diagram
           </button>
